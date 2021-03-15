@@ -7,7 +7,7 @@ This library can be used to create AI, ML, and simulations (such as of stock opt
 
 ## Installation
 ### Manualy
-Build C Library
+Build Python Library
 >make
 
 Clean
