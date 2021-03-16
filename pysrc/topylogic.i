@@ -309,6 +309,7 @@
     }
 
     int submit_generic_request(PyObject *arg, void (*f)(void *)) {
+        if (PyList_Check(arg)) return -1;
         struct request *req = create_request(GENERIC, arg, f);
         return submit_request($self, req);
     }
