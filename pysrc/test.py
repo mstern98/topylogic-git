@@ -27,7 +27,11 @@ def e(a):
 
 #vf = topylogic_function(v)
 #ef = topylogic_function(e)
-#g = graph()
+g = graph(max_loop=10)
+
+print(g.max_loop)
+print(topylogic.SWITCH)
+
 #v1 = g.create_vertex(vf.callback_void, 1)
 #v2 = g.create_vertex(vf.callback_void, 2)
 #edge = g.create_edge(v1, v2, ef.callback_int)

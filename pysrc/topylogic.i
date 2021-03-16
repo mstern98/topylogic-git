@@ -5,7 +5,6 @@
 %{
 #include "../include/topylogic.h"
 #include "../include/topologic.h"
-
 /*PyObject *callback(struct topylogic_function *tf, PyObject *args) {
     if(!tf) return NULL;
     PyObject *arglist;
@@ -102,6 +101,7 @@
 %include "../include/graph.h"
 %include "../include/vertex.h"
 %include "../include/edge.h"
+%include "../include/context.h"
 %extend graph {
     graph(int max_state_changes = -1,
         unsigned int snapshot_timestamp = START_STOP,

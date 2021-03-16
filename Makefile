@@ -19,9 +19,9 @@ TOPYLOGIC_PY=pysrc/topylogic.py
 TOPYLOGIC_O=pysrc/topylogic_wrap.o
 
 $(BIN): $(OBJ) $(INCLUDES) 
-	swig -python $(TOPYLOGIC_I)
+	swig -Wall -python -keyword $(TOPYLOGIC_I)
 	$(CC) -c -fPIC $(TOPYLOGIC_WRAP) -o $(TOPYLOGIC_O) $(PYFLAGS)
-	$(CC) -shared $(TOPYLOGIC_O) $(OBJ) -o $(TOPYLOGIC_SO)
+	$(CC) -shared $(TOPYLOGIC_O) $(OBJ) -o $(TOPYLOGIC_SO) 
 
 all:$(BIN)
 .PHONY : clean python
