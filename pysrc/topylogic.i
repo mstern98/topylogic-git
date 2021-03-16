@@ -224,8 +224,8 @@
         struct vertex_result *vr = (struct vertex_result*) malloc(sizeof(struct vertex_result));
         if (!vr) return NULL;
 
-        vr->vertex_argv = vertex_argv; //PyCapsule_New(vertex_argv, "vertex_argv", NULL);
-        vr->edge_argv = edge_argv; //PyCapsule_New(edge_argv, "edge_argv", NULL);
+        vr->vertex_argv = vertex_argv; 
+        vr->edge_argv = edge_argv;
 
         vr->vertex_size = v_s;
         vr->edge_size = e_s;
