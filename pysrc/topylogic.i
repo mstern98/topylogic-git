@@ -95,6 +95,7 @@
 %include "../include/vertex.h"
 %include "../include/edge.h"
 %include "../include/context.h"
+%include "../include/request.h"
 %extend edge {
     edge(struct vertex *a, struct vertex *b, int (*f)(void *, void *, const void *const, const void *const), PyObject *glbl = NULL) {
         if (PyList_Check(glbl)) return NULL;
@@ -302,23 +303,18 @@
         return resume_graph($self);
     }
 
-    int submit_request(struct request *request) {
-        return submit_request($self, request);
+    int submit_request(enum REQUESTS request_type, void *request) {
+        struct request *req = create_request(request_type, request, NULL);
+        return submit_request($self, req);
+    }
+
+    int submit_generic_request(PyObject *arg, void (*f)(void *)) {
+        struct request *req = create_request(GENERIC, arg, f);
+        return submit_request($self, req);
     }
     
     int process_requests() {
         return process_requests($self);
-    }
-};
-
-%include "../include/request.h"
-%extend request {
-    request(enum REQUEST request, void *args, void (*f)(void *)=NULL) {
-        if (PyList_Check(args)) return Py_None;
-        return create_request(request, args, f);
-    }
-    ~request() {
-        destroy_request($self);
     }
 };
 

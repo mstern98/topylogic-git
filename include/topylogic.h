@@ -14,13 +14,6 @@ struct bi_edge
     struct edge *edge_b_to_a;
 };
 
-//struct topylogic_function 
-//{
-//    PyObject *f;
-//};
-
-//PyObject *callback(struct topylogic_function *tf, PyObject *args);
-
 #ifdef __cplusplus
 }
 #endif
