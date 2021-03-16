@@ -29,6 +29,7 @@ def e_fun(a):
 
 #vf = topylogic_function(v)
 #ef = topylogic_function(e)
+r = request(0, 0)
 g = graph(max_loop=10)
 v = vertex(g, v_fun, 0)
 print("v: ", v)

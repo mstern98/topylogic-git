@@ -5,16 +5,6 @@
 %{
 #include "../include/topylogic.h"
 #include "../include/topologic.h"
-/*PyObject *callback(struct topylogic_function *tf, PyObject *args) {
-    if(!tf) return NULL;
-    PyObject *arglist;
-    arglist = Py_BuildValue("(O)", args);
-    PyObject *result = PyEval_CallObject (tf->f, arglist);
-
-    Py_DECREF(arglist);
-    if (!result) return NULL;
-    return result;
-}*/
 %}
 
 
@@ -311,6 +301,25 @@
     int resume_graph() {
         return resume_graph($self);
     }
+
+    int submit_request(struct request *request) {
+        return submit_request($self, request);
+    }
+    
+    int process_requests() {
+        return process_requests($self);
+    }
+};
+
+%include "../include/request.h"
+%extend request {
+    request(enum REQUEST request, void *args, void (*f)(void *)=NULL) {
+        if (PyList_Check(args)) return Py_None;
+        return create_request(request, args, f);
+    }
+    ~request() {
+        destroy_request($self);
+    }
 };
 
 %extend vertex_request {
@@ -438,4 +447,3 @@
         free($self);
     }
 };
-
