@@ -43,6 +43,7 @@ struct vertex
     struct AVLTree *edge_tree;
     struct AVLTree *joining_vertices;
     enum CONTEXT context;
+    struct graph *graph;
 };
 
 struct vertex_request

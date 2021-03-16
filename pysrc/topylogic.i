@@ -44,6 +44,7 @@
     }
 
     int push(PyObject *data) {
+        if (PyList_Check(data)) return -1;
         return push($self, data);
     }
 };
@@ -59,6 +60,8 @@
     int insert(PyObject *data, PyObject *id) {
         if (!PyLong_Check(id))
             return -1;
+        if (PyList_Check(data)) return -1;
+
         int i = (int) PyLong_AsLong(id);
         return insert($self, data, i);
     }
@@ -93,7 +96,7 @@
         return postorder($self, stack);
     }
 
-    void stackify(struct stack *stack){
+    void stackify(struct stack *stack) {
         return stackify($self, stack);
     }
 };
@@ -102,6 +105,169 @@
 %include "../include/vertex.h"
 %include "../include/edge.h"
 %include "../include/context.h"
+%extend edge {
+    edge(struct vertex *a, struct vertex *b, int (*f)(void *, void *, const void *const, const void *const), PyObject *glbl = NULL) {
+        if (PyList_Check(glbl)) return NULL;
+        return create_edge(a, b, f, glbl);
+    }
+    ~edge() {
+        remove_edge($self->a, $self->b);
+    }
+    int modify_edge(int (*f)(void *, void *, const void *const, const void *const) = NULL, PyObject *glbl = NULL) {
+        if (PyList_Check(glbl)) return -1;
+        return modify_edge($self->a, $self->b, f, glbl);
+    }
+    int set_f(int (*f)(void *, void *, const void *const, const void *const)) {
+        return modify_edge($self->a, $self->b, f, NULL);
+    }
+    int set_glbl(PyObject *glbl = NULL) {
+        if (PyList_Check(glbl)) return -1;
+        return modify_edge($self->a, $self->b, NULL, glbl);
+    }
+};
+
+%extend bi_edge {
+    bi_edge(struct vertex *a, struct vertex *b, int (*f)(void *, void *, const void *const, const void *const), PyObject *glbl = NULL) {
+        if (PyList_Check(glbl)) return NULL;
+
+        struct bi_edge *bi = (struct bi_edge *) malloc(sizeof(struct edge));
+        if (!bi) return NULL;
+
+        struct edge *edge_a_to_b = (struct edge *) malloc(sizeof(struct edge));
+        if (!edge_a_to_b) {
+            free(bi);
+            bi = NULL;
+            return NULL;
+        }
+        struct edge *edge_b_to_a = (struct edge *) malloc(sizeof(struct edge));
+        if (!edge_b_to_a) {
+            free(bi);
+            bi = NULL;
+            free(edge_a_to_b);
+            edge_a_to_b = NULL;
+            return NULL;
+        }
+        if(!create_bi_edge(a, b, f, glbl, &edge_b_to_a, &edge_a_to_b)) {
+            free(bi);
+            bi = NULL;
+            free(edge_a_to_b);
+            free(edge_b_to_a);
+            edge_a_to_b = NULL;
+            edge_b_to_a = NULL;
+            return NULL;
+        }
+        
+        bi->edge_a_to_b = edge_a_to_b;
+        bi->edge_b_to_a = edge_b_to_a;
+        return bi;
+    }
+    ~bi_edge() {
+        remove_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b);
+        $self->edge_a_to_b = NULL;
+        $self->edge_b_to_a = NULL;
+        free($self);
+    }
+
+    int modify_bi_edge(int (*f)(void *, void *, const void *const, const void *const) = NULL, PyObject *glbl = NULL) {
+        if (PyList_Check(glbl)) return -1;
+        return modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b, f, glbl);
+    }
+    int set_f(int (*f)(void *, void *, const void *const, const void *const)) {
+        return modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->->b, f, NULL);
+    }
+    int set_glbl(PyObject *glbl = NULL) {
+        if (PyList_Check(glbl)) return -1;
+        return modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b, NULL, glbl);
+    }
+};
+
+%extend vertex {
+    vertex(struct graph *graph, void (*f)(struct graph *, struct vertex_result *, void *, void *), int id, PyObject *glbl = NULL) {
+        if (PyList_Check(glbl)) return NULL;
+        struct vertex *v = create_vertex(graph, f, id, glbl);
+        if(!v) return NULL;
+        v->graph = graph;
+    }
+    ~vertex() {
+        struct graph *g = $self->graph;
+        $self->graph = NULL;
+        remove_vertex(g, $self);
+    }
+    int modify_vertex(void (*f)(struct graph *, struct vertex_result *, void *, void *), PyObject *glbl) {
+        if (PyList_Check(glbl)) return -1;
+        return modify_vertex($self, f, glbl);
+    }
+    int modify_f(void (*f)(struct graph *, struct vertex_result *, void *, void *)) {
+        return modify_vertex($self, f, $self->glbl);
+    }
+    int modify_glbl(PyObject *glbl) {
+        if (PyList_Check(glbl)) return -1;
+        return modify_vertex($self, $self->f, glbl);
+    }
+    int modify_shared_edge_vars(PyObject *edge_vars) {
+        if (PyList_Check(edge_vars)) return -1;
+        return modify_shared_edge_vars($self, edge_vars);
+    }
+}
+
+%extend vertex_result {
+    vertex_result(PyObject *vertex_argv, PyObject *edge_argv) {
+        if (PyList_Check(vertex_argv) || PyList_Check(edge_argv)) return NULL;
+       
+        size_t v_s = 1;
+        size_t e_s = 1;
+        if (PyTuple_Check(vertex_argv))
+            v_s = PyTuple_Size(vertex_argv);
+        if (PyTuple_Check(edge_argv))
+            e_s = PyTuple_Size(edge_argv);
+        
+        struct vertex_result *vr = (struct vertex_result*) malloc(sizeof(struct vertex_result));
+        if (!vr) return NULL;
+
+        vr->vertex_argv = PyCapsule_New(vertex_argv, "vertex_argv", NULL);
+        vr->edge_argv = PyCapsule_New(edge_argv, "edge_argv", NULL);
+
+        vr->vertex_size = v_s;
+        vr->edge_size = e_s;
+        return vr;
+    }
+    
+    ~vertex_result() {
+        $self->vertex_argv = NULL;
+        $self->edge_argv = NULL;
+        free($self);
+        $self = NULL;
+    }
+    
+    int set_vertex_argv(PyObject *vertex_argv) {
+        if (PyList_Check(vertex_argv)) return -1;
+        if (PyTuple_Check(vertex_argv))
+            $self->vertex_size = PyTuple_Size(vertex_argv);
+        else
+            $self->vertex_size = 1;
+        return PyCapsule_SetPointer($self->vertex_argv, vertex_argv);
+    }
+
+    int set_edge_argv(PyObject *edge_argv) {
+        if (PyList_Check(edge_argv)) return -1;
+        if (PyTuple_Check(edge_argv))
+            $self->vertex_size = PyTuple_Size(edge_argv);
+        else
+            $self->edge_size = 1;
+        return PyCapsule_SetPointer($self->edge_argv, edge_argv);
+    }
+
+    PyObject *get_vertex_argv() {
+        PyObject *val = PyCapsule_GetPointer($self->vertex_argv, "vertex_argv");
+        return val;
+    }
+
+    PyObject *get_edge_argv() {
+        PyObject *val = PyCapsule_GetPointer($self->edge_argv, "edge_argv");
+        return val;
+    }
+}
+
 %extend graph {
     graph(int max_state_changes = -1,
         unsigned int snapshot_timestamp = START_STOP,
@@ -175,41 +341,10 @@
     // }
 };
 
-%extend vertex_result {
-    vertex_result(PyObject *vertex_argv = NULL, PyObject *edge_argv = NULL, int edge_size=0, int vertex_size=0) {
-        struct vertex_result *v = malloc(sizeof(struct vertex_result));
-        v->vertex_argv = vertex_argv;
-        v->edge_argv = edge_argv;
-        v->edge_size = edge_size;
-        v->vertex_size = vertex_size;
-        return v;
-    }
-    ~vertex_result() {
-        free($self);
-    }
-
-    void set_vertex_args(PyObject *vertex_argv, int vertex_size=0) {
-        $self->vertex_argv = vertex_argv;
-        $self->vertex_size = vertex_size;
-    }
-
-    void set_edge_args(PyObject *edge_argv, int edge_size=0) {
-        $self->edge_argv = edge_argv;
-        $self->edge_size = edge_size;
-    }
-
-    PyObject *get_vertex_args() {
-        return $self->vertex_argv;
-    }
-
-    PyObject *get_edge_args() {
-        return $self->edge_argv;
-    }
-};
-
 %extend vertex_request {
     vertex_request(struct graph *graph, int id, void (*f)(struct graph *, struct vertex_result *, void*, void*)=NULL, PyObject *glbl=NULL) {
-        struct vertex_request *v = malloc(sizeof(struct vertex_request));
+        if (PyList_Check(glbl)) return NULL;
+        struct vertex_request *v = (struct vertex_request *) malloc(sizeof(struct vertex_request));
         v->graph = graph;
         v->id = id;
         v->f = f;
@@ -217,62 +352,78 @@
         return v;
     }
     ~vertex_request() {
+        $self->graph = NULL;
+        $self->id = 0;
+        $self->f = NULL;
+        $self->glbl = NULL;
         free($self);
     }
 };
 
 %extend mod_vertex_request {
     mod_vertex_request(struct vertex *vertex, void (*f)(struct graph *, struct vertex_result *, void*, void*)=NULL, PyObject *glbl=NULL) {
-        struct mod_vertex_request *v = malloc(sizeof(struct mod_vertex_request));
+        if (PyList_Check(glbl)) return NULL;
+        struct mod_vertex_request *v = (struct mod_vertex_request *) malloc(sizeof(struct mod_vertex_request));
         v->vertex = vertex;
         v->f = f;
         v->glbl = glbl;
         return v;   
     }
     ~mod_vertex_request() {
+        $self->vertex = NULL;
+        $self->f = NULL;
+        $self->glbl = NULL;
         free($self);
     }
 };
 
 %extend mod_edge_vars_request {
     mod_edge_vars_request(struct vertex *vertex, PyObject *edge_vars=NULL) {
-        struct mod_edge_vars_request *v = malloc(sizeof(struct mod_edge_vars_request));
+        if (PyList_Check(edge_vars)) return NULL;
+        struct mod_edge_vars_request *v = (struct mod_edge_vars_request *) malloc(sizeof(struct mod_edge_vars_request));
         v->vertex = vertex;
         v->edge_vars = edge_vars;
         return v;   
     }
     ~mod_edge_vars_request() {
+        $self->vertex = NULL;
+        $self->edge_vars = NULL;
         free($self);
     }
 };
 
 %extend destroy_vertex_request {
     destroy_vertex_request(struct graph *graph, struct vertex *vertex) {
-        struct destroy_vertex_request *v = malloc(sizeof(struct destroy_vertex_request));
+        struct destroy_vertex_request *v = (struct destroy_vertex_request *) malloc(sizeof(struct destroy_vertex_request));
         v->vertex = vertex;
         v->graph = graph;
         return v;   
     }
     ~destroy_vertex_request() {
+        $self->vertex = NULL;
+        $self->graph = NULL;
         free($self);
     }
 };
 
 %extend destroy_vertex_id_request {
     destroy_vertex_id_request(struct graph *graph, int id) {
-        struct destroy_vertex_id_request *v = malloc(sizeof(struct destroy_vertex_id_request));
+        struct destroy_vertex_id_request *v = (struct destroy_vertex_id_request *) malloc(sizeof(struct destroy_vertex_id_request));
         v->id = id;
         v->graph = graph;
         return v;   
     }
     ~destroy_vertex_id_request() {
+        $self->id = 0;
+        $self->graph = NULL;
         free($self);
     }
 };
 
 %extend edge_request {
     edge_request(struct vertex *a, struct vertex *b, int (*f)(void *, void*, const void* const, const void* const)=NULL, PyObject *glbl=NULL) {
-        struct edge_request *e = malloc(sizeof(struct edge_request));
+        if (PyList_Check(glbl)) return NULL;
+        struct edge_request *e = (struct edge_request *) malloc(sizeof(struct edge_request));
         e->a = a;
         e->b = b;
         e->f = f;
@@ -280,30 +431,38 @@
         return e;
     }
     ~edge_request() {
+        $self->a = NULL;
+        $self->b = NULL;
+        $self->f = NULL;
+        $self->glbl = NULL;
         free($self);
     }
 };
 
 %extend destroy_edge_request {
     destroy_edge_request(struct vertex *a, struct vertex *b) {
-        struct destroy_edge_request *e = malloc(sizeof(struct destroy_edge_request));
+        struct destroy_edge_request *e = (struct destroy_edge_request *) malloc(sizeof(struct destroy_edge_request));
         e->a = a;
         e->b = b;
         return e;
     }
     ~destroy_edge_request() {
+        $self->a = NULL;
+        $self->b = NULL;
         free($self);
     }
 };
 
 %extend destroy_edge_id_request {
     destroy_edge_id_request(struct vertex *a, int id) {
-        struct destroy_edge_id_request *e = malloc(sizeof(struct destroy_edge_id_request));
+        struct destroy_edge_id_request *e = (struct destroy_edge_id_request *) malloc(sizeof(struct destroy_edge_id_request));
         e->a = a;
         e->id = id;
         return e;
     }
     ~destroy_edge_id_request() {
+        $self->a = NULL;
+        $self->id = 0;
         free($self);
     }
 };
