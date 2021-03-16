@@ -3,10 +3,10 @@
 
 %module topylogic
 %{
-#include "../include/topologic.h"
 #include "../include/topylogic.h"
+#include "../include/topologic.h"
 
-PyObject *callback(struct topylogic_function *tf, PyObject *args) {
+/*PyObject *callback(struct topylogic_function *tf, PyObject *args) {
     if(!tf) return NULL;
     PyObject *arglist;
     arglist = Py_BuildValue("(O)", args);
@@ -15,8 +15,9 @@ PyObject *callback(struct topylogic_function *tf, PyObject *args) {
     Py_DECREF(arglist);
     if (!result) return NULL;
     return result;
-}
+}*/
 %}
+
 
 %include "../include/stack.h"
 %extend stack{
@@ -28,11 +29,13 @@ PyObject *callback(struct topylogic_function *tf, PyObject *args) {
         destroy_stack($self);
     }
 
-    PyObject *get(int index) {
-        printf("GOT %p\n",  (void *) get($self, index));
-        //PyObject *ret = get($self, index);
-        //if (!ret) return Py_None;
-        return Py_None;
+    PyObject *get(PyObject *index) {
+        if(!PyLong_Check(index))
+            return Py_None;
+        int i = (int) PyLong_AsLong(index);
+        PyObject *ret = get($self, i);
+        if (!ret) return Py_None;
+        return ret;
     }
 
     PyObject *pop() {
@@ -54,18 +57,27 @@ PyObject *callback(struct topylogic_function *tf, PyObject *args) {
     ~AVLTree() {
         destroy_avl($self);
     }
-    int insert(PyObject *data, int id) {
-        return insert($self, data, id);
+    int insert(PyObject *data, PyObject *id) {
+        if (!PyLong_Check(id))
+            return -1;
+        int i = (int) PyLong_AsLong(id);
+        return insert($self, data, i);
     }
 
-    PyObject *remove_ID(int id) {
-        PyObject *ret = remove_ID($self, id);
+    PyObject *remove_ID(PyObject * id) {
+        if (!PyLong_Check(id))
+            return Py_None;
+        int i = (int) PyLong_AsLong(id);
+        PyObject *ret = remove_ID($self, i);
         if (!ret) return Py_None;
         return ret;
     }
 
-    PyObject *find(int id) {
-        PyObject *ret = find($self, id);
+    PyObject *find(PyObject *id) {
+        if (!PyLong_Check(id))
+            return Py_None;
+        int i = (int) PyLong_AsLong(id);
+        PyObject *ret = find($self, i);
         if (!ret) return Py_None;
         return ret;
     }
@@ -130,11 +142,6 @@ PyObject *callback(struct topylogic_function *tf, PyObject *args) {
         free($1);
     }
     
-    int run(struct vertex_result **vertex_args) {
-        printf("%p\n", vertex_args[0]);
-        return run($self, vertex_args);
-    }
-
     %typemap(in) int *id{
         $1 = NULL;
         if (!PyList_Check($input)) {
@@ -159,22 +166,6 @@ PyObject *callback(struct topylogic_function *tf, PyObject *args) {
         free($1);
     }
 
-    int set_start_set(int *id, int num_vertices) {
-        return start_set($self, id, num_vertices);
-    }
-
-    int pause_graph() {
-        return pause_graph($self);
-    }
-
-    int resume_graph() {
-        return resume_graph($self);
-    }
-
-    void print_graph() {
-        return print_graph($self);
-    }
-
     // %typemap(in) void (*)(struct vertex_result *) {
     //     $1 = NULL;
     //     int ret = 0;
@@ -182,74 +173,6 @@ PyObject *callback(struct topylogic_function *tf, PyObject *args) {
     //         SWIG_exception_fail(SWIG_ArgError(ret), "in method '" "$symname" "', argument " "$argnum"" of type '" "$1_type""'");
     //     $1 = $input;
     // }
-
-    struct vertex *create_vertex(void (*f)(struct graph *, struct vertex_result *, void*, void*), int id, PyObject *glbl = NULL) {
-        return create_vertex($self, f, id, glbl);
-    }
-
-    int remove_vertex(struct vertex *vertex) {
-        return remove_vertex($self, vertex);
-    }
-
-    int remove_vertex_id(int id) {
-        return remove_vertex_id($self, id);
-    }
-
-    int modify_vertex(struct vertex *vertex, PyObject *f, PyObject *glbl = NULL) {
-        return modify_vertex(vertex, (void *) f, glbl);
-    }
-
-    int modify_shared_edge_vars(struct vertex *vertex, PyObject *edge_vars) {
-        return modify_shared_edge_vars(vertex, edge_vars);
-    }
- 
-    struct edge *create_edge(struct vertex *a, struct vertex *b, PyObject *f, PyObject *glbl = NULL) {
-        return create_edge(a, b, (void *) f, glbl);
-    }
-
-    int create_bi_edge(struct vertex *a, struct vertex *b, PyObject *f, PyObject *glbl, struct edge **edge_a_to_b = NULL, struct edge **edge_b_to_a = NULL) {
-        return create_bi_edge(a, b, (void *) f, glbl, edge_a_to_b, edge_b_to_a);
-    }
-
-    int remove_edge(struct vertex *a, struct vertex *b) {
-        return remove_edge(a, b);
-    }
-
-    int remove_edge_id(struct vertex *a, int id) {
-        return remove_edge_id(a, id);
-    }
-
-    int remove_bi_edge(struct vertex *a, struct vertex *b) {
-        return remove_bi_edge(a, b);
-    }
-
-    int modify_edge(struct vertex *a, struct vertex *b, PyObject *f = NULL, PyObject *glbl = NULL) {
-        return modify_edge(a, b, (void *) f, glbl);
-    }
-
-    int modify_bi_edge(struct vertex *a, struct vertex *b, PyObject *f = NULL, PyObject *glbl = NULL) {
-        return modify_bi_edge(a, b, (void *) f, glbl);
-    }
-
-    struct request *create_request(enum REQUESTS request, PyObject *args, void (*f)(void *) = NULL) {
-        return create_request(request, args, f);
-    }
-
-    int submit_request(struct request *request) {
-        return submit_request($self, request);
-    }
-
-    int process_requests() {
-        return process_requests($self);
-    }
-
-    struct vertex *find_vertex(int id) {
-        return find($self->vertices, id);
-    }
-
-    struct edge *find_edge(struct vertex *v, int id) {
-        return find(v->edge_tree, id);
-    }
 };
 
 %extend vertex_result {
@@ -348,7 +271,7 @@ PyObject *callback(struct topylogic_function *tf, PyObject *args) {
 };
 
 %extend edge_request {
-    edge_request(struct vertex *a, struct vertex *b, int (*f)(void *, void*, const void* const)=NULL, PyObject *glbl=NULL) {
+    edge_request(struct vertex *a, struct vertex *b, int (*f)(void *, void*, const void* const, const void* const)=NULL, PyObject *glbl=NULL) {
         struct edge_request *e = malloc(sizeof(struct edge_request));
         e->a = a;
         e->b = b;
@@ -385,49 +308,3 @@ PyObject *callback(struct topylogic_function *tf, PyObject *args) {
     }
 };
 
-%include "../include/topylogic.h"
-%extend topylogic_function {
-    topylogic_function(PyObject *f) {
-        if(!PyCallable_Check(f)) 
-        {
-            PyErr_SetString(PyExc_TypeError, "Vertex Function Must Be Callable");
-            return NULL;
-        }
-        struct topylogic_function *v = malloc(sizeof(struct topylogic_function));
-        if(!v) return NULL;
-        Py_XINCREF(f);
-        v->f = f; 
-        Py_INCREF(Py_None);
-        return v;
-    }
-
-    ~topylogic_function() {
-        Py_XDECREF($self->f);
-        free($self);
-    }
-
-    void callback_void(PyObject *args) {
-        printf("CALL?\n");
-        PyObject *result = callback($self, args);
-        if (!result) return;
-        Py_DECREF(result);
-    }
-
-    int callback_int(PyObject *args) {
-        int ret = 0;
-        PyObject *result = callback($self, args);
-        if (!result) return 0;
-        ret = (int) PyFloat_AsDouble(result);
-        Py_DECREF(result);
-        return ret;
-    }
-
-    void *callback_object(PyObject *args) {
-        void *ret = NULL;
-        PyObject *result = callback($self, args);
-        if (!result) return NULL;
-        ret = PyLong_AsVoidPtr(result);
-        Py_DECREF(result);
-        return ret;
-    }
-};

@@ -7,12 +7,12 @@
 extern "C" {
 #endif
 
-struct topylogic_function 
-{
-    PyObject *f;
-};
+//struct topylogic_function 
+//{
+//    PyObject *f;
+//};
 
-PyObject *callback(struct topylogic_function *tf, PyObject *args);
+//PyObject *callback(struct topylogic_function *tf, PyObject *args);
 
 #ifdef __cplusplus
 }
