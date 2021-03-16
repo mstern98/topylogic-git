@@ -6,42 +6,12 @@ The library provides a way for the client to define what information is saved lo
 This library can be used to create AI, ML, and simulations (such as of stock options, electron-electron interaction, etc.).
 
 ## Installation
-### Arch Linux
->yay -S topologic-git
-
--To use in program use
-
->#include <topologic/topologic.h>
-
--Link with
-
->gcc ... -ltopologic
-
 ### Manualy
-Build C Library
+Build Python Library
 >make
-
--creates libtopologic.a
-
-Build C++ Library
->make cpp
-
--creates libtopologic.a
 
 Clean
 >make clean
-
-Debug
->make CFLAGS=-DDEBUG
-
-## TODO
--Thread sanity
-
--C# Wrap
-
--Rust Wrap
-
--Python (2/3) Wrap
 
 # Errata
 ## Edge/vertex modification
