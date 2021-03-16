@@ -20,16 +20,18 @@ a.preorder(s)
 print(s.pop())
 print(s.pop())
 
-def v(a : vertex_result):
+def v_fun(a : vertex_result):
     print("HI")
 
-def e(a):
+def e_fun(a):
     print(a)
     return 1
 
 #vf = topylogic_function(v)
 #ef = topylogic_function(e)
 g = graph(max_loop=10)
+v = vertex(g, v_fun, 0)
+print("v: ", v)
 
 print(g.max_loop)
 print(g.set_starting_ids([1, 2, 3]))
