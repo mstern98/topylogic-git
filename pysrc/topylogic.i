@@ -224,8 +224,8 @@
         struct vertex_result *vr = (struct vertex_result*) malloc(sizeof(struct vertex_result));
         if (!vr) return NULL;
 
-        vr->vertex_argv = PyCapsule_New(vertex_argv, "vertex_argv", NULL);
-        vr->edge_argv = PyCapsule_New(edge_argv, "edge_argv", NULL);
+        vr->vertex_argv = vertex_argv; //PyCapsule_New(vertex_argv, "vertex_argv", NULL);
+        vr->edge_argv = edge_argv; //PyCapsule_New(edge_argv, "edge_argv", NULL);
 
         vr->vertex_size = v_s;
         vr->edge_size = e_s;
@@ -239,32 +239,30 @@
         $self = NULL;
     }
     
-    int set_vertex_argv(PyObject *vertex_argv) {
-        if (PyList_Check(vertex_argv)) return -1;
+    void set_vertex_argv(PyObject *vertex_argv) {
+        if (PyList_Check(vertex_argv)) return;
         if (PyTuple_Check(vertex_argv))
             $self->vertex_size = PyTuple_Size(vertex_argv);
         else
             $self->vertex_size = 1;
-        return PyCapsule_SetPointer($self->vertex_argv, vertex_argv);
+        $self->vertex_argv = vertex_argv;
     }
 
-    int set_edge_argv(PyObject *edge_argv) {
-        if (PyList_Check(edge_argv)) return -1;
+    void set_edge_argv(PyObject *edge_argv) {
+        if (PyList_Check(edge_argv)) return;
         if (PyTuple_Check(edge_argv))
             $self->vertex_size = PyTuple_Size(edge_argv);
         else
             $self->edge_size = 1;
-        return PyCapsule_SetPointer($self->edge_argv, edge_argv);
+        $self->edge_argv = edge_argv;
     }
 
     PyObject *get_vertex_argv() {
-        PyObject *val = PyCapsule_GetPointer($self->vertex_argv, "vertex_argv");
-        return val;
+        return $self->vertex_argv;
     }
 
     PyObject *get_edge_argv() {
-        PyObject *val = PyCapsule_GetPointer($self->edge_argv, "edge_argv");
-        return val;
+        return $self->edge_argv;
     }
 }
 
