@@ -32,6 +32,7 @@ def e(a):
 g = graph(max_loop=10)
 
 print(g.max_loop)
+print(g.set_starting_ids([1, 2, 3]))
 print(topylogic.SWITCH)
 
 vr = vertex_result((1, 2), 3)

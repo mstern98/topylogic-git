@@ -304,11 +304,11 @@
         return run($self, args);
     }
 
-    int pause() {
+    int pause_graph() {
         return pause_graph($self);
     }
 
-    int resume() {
+    int resume_graph() {
         return resume_graph($self);
     }
 };
