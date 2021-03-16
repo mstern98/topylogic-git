@@ -126,6 +126,7 @@
     }
 };
 
+%include "../include/topylogic.h"
 %extend bi_edge {
     bi_edge(struct vertex *a, struct vertex *b, int (*f)(void *, void *, const void *const, const void *const), PyObject *glbl = NULL) {
         if (PyList_Check(glbl)) return NULL;
@@ -173,7 +174,7 @@
         return modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b, f, glbl);
     }
     int set_f(int (*f)(void *, void *, const void *const, const void *const)) {
-        return modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->->b, f, NULL);
+        return modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b, f, NULL);
     }
     int set_glbl(PyObject *glbl = NULL) {
         if (PyList_Check(glbl)) return -1;
@@ -280,63 +281,36 @@
         destroy_graph($self);
     }
 
-    %typemap(in) struct vertex_result **{
-        $1 = NULL;
-        if (!PyList_Check($input)) {
-            PyErr_SetString(PyExc_TypeError, "Not A List");
-            return NULL;
+    int set_starting_ids(PyObject *id) {
+        if (!PyList_Check(id)) return -1;
+        int num_vertices = PyList_Size(id), i = 0;
+        int ids[num_vertices];
+        for (i = 0; i < num_vertices; ++i) {
+            PyObject *o = PyList_GetItem(id, i);
+            if (!PyInt_Check(o)) return -1;
+            ids[i] = PyInt_AsLong(o);
         }
-        int size = PyList_Size($input);
-        int i = 0;
-        $1 = (struct vertex_result **) malloc(sizeof(struct vertex_result *) * (size + 1));
-        for (i = 0; i < size; i++) {
-            PyObject *o = PyList_GetItem($input, i);
-            void *argp = NULL;
-            const int ret = SWIG_ConvertPtr(o, &argp, $*1_descriptor, 0);
-            if (!SWIG_IsOK(ret)) {
-                free($1);
-                SWIG_exception_fail(SWIG_ArgError(ret), "in method '" "$symname" "', argument " "$argnum"" of type '" "$1_type""'");
-            }
-            $1[i] = (struct vertex_result *) (argp);
-        }
-        $1[size] = NULL;
+        return start_set($self, ids, num_vertices);
     }
 
-    %typemap(freearg) struct vertex_result **{
-        free($1);
-    }
-    
-    %typemap(in) int *id{
-        $1 = NULL;
-        if (!PyList_Check($input)) {
-            PyErr_SetString(PyExc_TypeError, "Not A List");
-            return NULL;
+    int run(PyObject *init_vertex_args) {
+        if (!PyList_Check(init_vertex_args)) return -1;
+        int n = PyList_Size(init_vertex_args), i = 0;
+        struct vertex_result **args = (struct vertex_result **) malloc(sizeof(struct vertex_result *) * n);
+        for (i = 0; i < n; ++i) {
+            PyObject *o = PyList_GetItem(init_vertex_args, i);
+            PyArg_Parse(o, "O", &(args[i]));
         }
-        int size = PyList_Size($input);
-        int i = 0;
-        $1 = (int *) malloc(sizeof(int) * (size));
-        for (i = 0; i < size; i++) {
-            PyObject *o = PyList_GetItem($input, i);
-            if (!PyInt_Check(o)) {
-                free($1);
-                PyErr_SetString(PyExc_TypeError,"list must contain ints");
-            	return NULL;
-            }
-            $1[i] = PyInt_AsLong(o);
-        }
+        return run($self, args);
     }
 
-    %typemap(freearg) int *id{
-        free($1);
+    int pause() {
+        return pause_graph($self);
     }
 
-    // %typemap(in) void (*)(struct vertex_result *) {
-    //     $1 = NULL;
-    //     int ret = 0;
-    //     if (!(ret = PyCallable_Check($input)))
-    //         SWIG_exception_fail(SWIG_ArgError(ret), "in method '" "$symname" "', argument " "$argnum"" of type '" "$1_type""'");
-    //     $1 = $input;
-    // }
+    int resume() {
+        return resume_graph($self);
+    }
 };
 
 %extend vertex_request {
