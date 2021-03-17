@@ -101,6 +101,7 @@
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = f;
+        if(!PyCallable_Check(f)) return NULL;
         return create_edge(a, b, edge_f, g);
     }
     ~edge() {
@@ -178,7 +179,13 @@
 %extend vertex {
     vertex(struct graph *graph, void (*f)(struct graph *, struct vertex_result *, void *, void *), int id, PyObject *glbl = NULL) {
         if (PyList_Check(glbl)) return NULL;
-        struct vertex *v = create_vertex(graph, f, id, glbl);
+
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        g->glbl = (void*)glbl;
+        g->py_callback = f;
+        if(!PyCallable_Check(f)) return;
+        struct vertex *v = create_vertex(graph, vertex_f, id, g);
+
         if(!v) return NULL;
         v->graph = graph;
     }
