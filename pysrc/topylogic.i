@@ -56,15 +56,15 @@ void vertex_f(struct graph *graph, struct vertex_result *args, void *glbl, void 
         PyErr_Print();
 
     args->vertex_argv = PyTuple_GetItem(res, 0);
+    args->vertex_size = sizeof(args->vertex_argv);
     args->edge_argv = PyTuple_GetItem(res, 1);
+    args->edge_size = sizeof(args->edge_argv);
     g->glbl = PyTuple_GetItem(res, 2);
     ev->vars = PyTuple_GetItem(res, 3);
     Py_DECREF(res);
     Py_DECREF(py_graph);
     Py_DECREF(py_args);
 }
-
-
 
 void generic_f(void *glbl) {
 	struct glbl_args *g = (struct glbl_args*) glbl;
@@ -427,12 +427,8 @@ void generic_f(void *glbl) {
     vertex_result(PyObject *vertex_argv, PyObject *edge_argv) {
         if (PyList_Check(vertex_argv) || PyList_Check(edge_argv)) return NULL;
        
-        size_t v_s = 1;
-        size_t e_s = 1;
-        if (PyTuple_Check(vertex_argv))
-            v_s = PyTuple_Size(vertex_argv);
-        if (PyTuple_Check(edge_argv))
-            e_s = PyTuple_Size(edge_argv);
+        size_t v_s = sizeof(vertex_argv);
+        size_t e_s = sizeof(edge_argv);
         
         struct vertex_result *vr = (struct vertex_result*) malloc(sizeof(struct vertex_result));
         if (!vr) return NULL;
