@@ -14,6 +14,12 @@ struct bi_edge
     struct edge *edge_b_to_a;
 };
 
+struct glbl_args
+{
+    struct void *glbl;
+    PyObject *py_callback;
+};
+
 #ifdef __cplusplus
 }
 #endif
