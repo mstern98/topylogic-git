@@ -29,10 +29,10 @@ all:$(BIN)
 clean:
 	rm -rf pysrc/__pycache__
 	rm -rf pysrc/build
-	-rm $(OBJ)
-	-rm $(TOPYLOGIC_PY) 
-	-rm $(TOPYLOGIC_SO) 
-	-rm $(TOPYLOGIC_O) 
-	-rm $(TOPYLOGIC_WRAP)
+	-rm -f $(OBJ)
+	-rm -f $(TOPYLOGIC_PY) 
+	-rm -f $(TOPYLOGIC_SO) 
+	-rm -f $(TOPYLOGIC_O) 
+	-rm -f $(TOPYLOGIC_WRAP)
 	-rm -f pysrc/state_*
 
