@@ -5,28 +5,24 @@ int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *co
     int res = 0;
     struct glbl_args *g = (struct glbl_args *) glbl;
     PyObject *py_callback = g->py_callback;
-		void *glbl_ = g->glbl;
+    void *glbl_ = g->glbl;
 
-    //Make sure variables are correct and correct typing
-    //Make the callback to py_callback happen
-    //Rinse and repeat for vertex_f and generic_f
-		//
-	struct edge_args *edgy = malloc(sizeof(struct edge_args));
-	edgy->args = args;
-	edgy->glbl = glbl_;
-	edgy->edge_vars_a = (void *)edge_vars_a;
-	edgy->edge_vars_b = (void *)edge_vars_b;
+    PyObject *py_args = PyTuple_New(4);
+    PyTuple_SetItem(py_args, 0, args);
+    PyTuple_SetItem(py_args, 1, glbl_);
+    if (edge_vars_a) PyTuple_SetItem(py_args, 2, (PyObject *) edge_vars_a);
+    else PyTuple_SetItem(py_args, 2, Py_None);
+    if (edge_vars_b) PyTuple_SetItem(py_args, 3, (PyObject *) edge_vars_b);
+    else PyTuple_SetItem(py_args, 3, Py_None);
 
-	PyObject *result = PyObject_CallObject(py_callback, (struct _object *)edgy);
 
-	free(edgy);
-	edgy = NULL;
-
+	PyObject *result = PyObject_CallObject(py_callback, py_args);
+    
+    Py_DECREF(py_args);
     if (!result) return -1;
 
     PyArg_Parse(result, "i", &res);
     Py_DECREF(result);
-
     return res;
 }
 
@@ -36,17 +32,18 @@ void vertex_f(struct graph* graph, struct vertex_result* args, void* glbl, void*
 	PyObject *py_callback = g->py_callback;
 	void *glbl_ = g->glbl;
 
-    //PyObject *py_args = Py_BuildValue("()", glbl_);
-    //PyList_Append(py_args, Py_BuildValue("{s:O}", "graph", &graph));
+    PyObject *py_args = PyTuple_New(5);
+    PyTuple_SetItem(py_args, 0, PyLong_FromVoidPtr(graph));
+    PyTuple_SetItem(py_args, 1, args->vertex_argv);
+    PyTuple_SetItem(py_args, 2, args->edge_argv);
+    if (glbl) PyTuple_SetItem(py_args, 3, glbl_);
+    else PyTuple_SetItem(py_args, 3, Py_None);
+    if (edge_vars) PyTuple_SetItem(py_args, 4, edge_vars);
+    else PyTuple_SetItem(py_args, 4, Py_None);
 
-	struct vertex_args *vert = malloc(sizeof(struct vertex_args));
-	vert->graph = graph;
-	vert->args = args;
-	vert-> glbl = glbl_;
-	vert->edge_vars = edge_vars;
-
-	void* res = PyObject_CallObject(py_callback, NULL);
+	void* res = PyObject_CallFunction(py_callback, "O", py_args);
     Py_DECREF(res);
+    Py_DECREF(py_args);
 }
 
 
@@ -55,7 +52,7 @@ void generic_f(void *glbl) {
 	PyObject *py_callback = g->py_callback;
 	void* glbl_ = g->glbl;
 
-	void* res = PyObject_CallObject(py_callback, (struct _object*)glbl_);
+	void* res = PyObject_CallObject(py_callback, (PyObject *) glbl_);
     Py_DECREF(res);
 }
 

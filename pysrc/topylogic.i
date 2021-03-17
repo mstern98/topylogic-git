@@ -296,10 +296,13 @@
 
         vr->vertex_size = v_s;
         vr->edge_size = e_s;
+
+        fprintf(stderr, "%p\n", vr);
         return vr;
     }
     
     ~vertex_result() {
+        if(!$self) return;
         $self->vertex_argv = NULL;
         $self->edge_argv = NULL;
         free($self);
@@ -359,15 +362,31 @@
         return start_set($self, ids, num_vertices);
     }
 
-    int run(PyObject *init_vertex_args) {
-        if (!PyList_Check(init_vertex_args)) return -1;
-        int n = PyList_Size(init_vertex_args), i = 0;
-        struct vertex_result **args = (struct vertex_result **) malloc(sizeof(struct vertex_result *) * n);
-        for (i = 0; i < n; ++i) {
-            PyObject *o = PyList_GetItem(init_vertex_args, i);
-            PyArg_Parse(o, "O", &(args[i]));
+
+    %typemap(in) struct vertex_result **{
+        $1 = NULL;
+        if (!PyList_Check($input)) {
+            PyErr_SetString(PyExc_TypeError, "Not A List");
+            return NULL;
         }
-        return run($self, args);
+        int size = PyList_Size($input);
+        int i = 0;
+        $1 = (struct vertex_result **) malloc(sizeof(struct vertex_result *) * (size + 1));
+        for (i = 0; i < size; i++) {
+            PyObject *o = PyList_GetItem($input, i);
+            void *argp = NULL;
+            const int ret = SWIG_ConvertPtr(o, &argp, $*1_descriptor, 0);
+            if (!SWIG_IsOK(ret)) {
+                free($1);
+                SWIG_exception_fail(SWIG_ArgError(ret), "in method '" "$symname" "', argument " "$argnum"" of type '" "$1_type""'");
+            }
+            $1[i] = (struct vertex_result *) (argp);
+        }
+        $1[size] = NULL;
+    }
+
+    int run(struct vertex_result **init_vertex_args) {
+        return run($self, init_vertex_args);
     }
 
     int pause_graph() {
