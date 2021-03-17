@@ -20,8 +20,9 @@ a.preorder(s)
 print(s.pop())
 print(s.pop())
 
-def v_fun(a : vertex_result):
+def v_fun():
     print("HI")
+    return 1
 
 def e_fun(a):
     print(a)
@@ -30,11 +31,11 @@ def e_fun(a):
 #vf = topylogic_function(v)
 #ef = topylogic_function(e)
 g = graph(max_loop=10)
-v = vertex(g, v_fun, 0)
-print("v: ", v)
+v = vertex(g, v_fun, 0, (0,1))
+print("v: ", v.test(), v.test())
 
 print(g.max_loop)
-print(g.set_starting_ids([1, 2, 3]))
+#print(g.set_starting_ids([1, 2, 3]))
 print(topylogic.SWITCH)
 
 vr = vertex_result((1, 2), 3)
