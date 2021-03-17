@@ -27,17 +27,22 @@ def v_fun(a, b1, b2, c, d):
     print("a: ", a, " b: ", b1, " ", b2, " c: ", c, " d: ", d)
     return 1
 
-def e_fun(a):
-    print(a)
+def e_fun(a, b, c, d):
+    print(a, b, c, d)
     return 1
 
 #vf = topylogic_function(v)
 #ef = topylogic_function(e)
+
 g = graph(max_loop=10)
-v = vertex(g, v_fun, 0, (0,1))
+v1 = vertex(g, v_fun, 0, (0,1))
+v2 = vertex(g, v_fun, 1, (0,1))
+e = edge(v1, v2, e_fun)
 vr = vertex_result((1, 2), 3)
-print("start: ", g.set_starting_ids([0]))
+g.set_starting_ids([0])
 g.run([vr])
+
+
 #print("v: ", v.test(), v.test())
 
 #print(g.max_loop)
