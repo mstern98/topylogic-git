@@ -15,9 +15,9 @@ int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *co
     PyObject *py_args = PyTuple_New(4);
     PyTuple_SetItem(py_args, 0, Py_BuildValue("O", args));
     PyTuple_SetItem(py_args, 1, Py_BuildValue("O", glbl_));
-    if (edge_vars_a) PyTuple_SetItem(py_args, 2, Py_BuildValue("O", edge_vars_a));
+    if (edge_vars_a) PyTuple_SetItem(py_args, 2, Py_BuildValue("O", ((struct edge_vars *) edge_vars_a)->vars));
     else PyTuple_SetItem(py_args, 2, Py_None);
-    if (edge_vars_b) PyTuple_SetItem(py_args, 3, Py_BuildValue("O", edge_vars_b));
+    if (edge_vars_b) PyTuple_SetItem(py_args, 3, Py_BuildValue("O", ((struct edge_vars *) edge_vars_b)->vars));
     else PyTuple_SetItem(py_args, 3, Py_None);
 
 	PyObject *res = PyObject_CallObject(py_callback, py_args);
@@ -34,8 +34,9 @@ int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *co
 }
 
 
-void vertex_f(struct graph* graph, struct vertex_result* args, void* glbl, void* edge_vars) {
+void vertex_f(struct graph *graph, struct vertex_result *args, void *glbl, void *edge_vars) {
 	struct glbl_args *g = (struct glbl_args *) glbl;
+    struct edge_vars *ev = (struct edge_vars *) edge_vars;
 	PyObject *py_callback = g->py_callback;
 	void *glbl_ = g->glbl;
 
@@ -47,18 +48,17 @@ void vertex_f(struct graph* graph, struct vertex_result* args, void* glbl, void*
     PyTuple_SetItem(py_args, 2, Py_BuildValue("O", args->edge_argv));
     if (glbl) PyTuple_SetItem(py_args, 3, Py_BuildValue("O", glbl_));
     else PyTuple_SetItem(py_args, 3, Py_None);
-    if (edge_vars) PyTuple_SetItem(py_args, 4, Py_BuildValue("O", edge_vars));
+    if (edge_vars) PyTuple_SetItem(py_args, 4, Py_BuildValue("O", ev->vars));
     else PyTuple_SetItem(py_args, 4, Py_None);
 
-	void* res = PyObject_CallFunction(py_callback, "O", py_args);
+	void *res = PyObject_CallFunction(py_callback, "O", py_args);
     if (!res)
         PyErr_Print();
 
     args->vertex_argv = PyTuple_GetItem(res, 0);
     args->edge_argv = PyTuple_GetItem(res, 1);
     g->glbl = PyTuple_GetItem(res, 2);
-    edge_vars = PyTuple_GetItem(res, 3);
-
+    ev->vars = PyTuple_GetItem(res, 3);
     Py_DECREF(res);
     Py_DECREF(py_graph);
     Py_DECREF(py_args);
@@ -69,9 +69,9 @@ void vertex_f(struct graph* graph, struct vertex_result* args, void* glbl, void*
 void generic_f(void *glbl) {
 	struct glbl_args *g = (struct glbl_args*) glbl;
 	PyObject *py_callback = g->py_callback;
-	void* glbl_ = g->glbl;
+	void *glbl_ = g->glbl;
 
-	void* res = PyObject_CallObject(py_callback, Py_BuildValue("O", glbl_));
+	void *res = PyObject_CallObject(py_callback, Py_BuildValue("O", glbl_));
     if (!res)
         PyErr_Print();
     Py_DECREF(res);
@@ -378,6 +378,11 @@ void generic_f(void *glbl) {
 
         if(!v) return NULL;
         v->graph = graph;
+        
+        struct edge_vars *vars = (struct edge_vars *) malloc(sizeof(struct edge_vars));
+        vars->vars = Py_None;
+        modify_shared_edge_vars(v, vars);
+
         return v;
     }
     ~vertex() {}
@@ -412,11 +417,9 @@ void generic_f(void *glbl) {
     }
     int modify_shared_edge_vars(PyObject *edge_vars) {
         if (PyList_Check(edge_vars)) return -1;
-        return modify_shared_edge_vars($self, edge_vars);
-    }
-
-    void test() {
-        ($self->f)($self->graph, NULL, $self->glbl, $self->shared->vertex_data);
+        struct edge_vars *vars = (struct edge_vars *) malloc(sizeof(struct edge_vars));
+        vars->vars = edge_vars;
+        return modify_shared_edge_vars($self, vars);
     }
 }
 
@@ -619,13 +622,16 @@ void generic_f(void *glbl) {
     mod_edge_vars_request(struct vertex *vertex, PyObject *edge_vars=NULL) {
         if (PyList_Check(edge_vars)) return NULL;
         struct mod_edge_vars_request *v = (struct mod_edge_vars_request *) malloc(sizeof(struct mod_edge_vars_request));
+        struct edge_vars *vars = (struct edge_vars *) malloc(sizeof(struct edge_vars));
+        vars->vars = edge_vars;
         v->vertex = vertex;
-        v->edge_vars = edge_vars;
+        v->edge_vars = vars;
         return v;   
     }
     ~mod_edge_vars_request() {}
     void destroy() {
         $self->vertex = NULL;
+        free($self->edge_vars);
         $self->edge_vars = NULL;
         free($self);
     }

@@ -20,6 +20,11 @@ struct glbl_args
     PyObject *py_callback;
 };
 
+struct edge_vars
+{
+    void *vars;
+};
+
 extern int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *const edge_vars_b);
 extern void vertex_f(struct graph *graph, struct vertex_result* args, void* glbl, void* edge_vars);
 extern void generic_f(void *glbl);

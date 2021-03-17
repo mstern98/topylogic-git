@@ -32,8 +32,9 @@ def v_fun(a, b1, b2, c, d):
     if (d == None):
         d = 1
     else:
-        d += 1
+        d += 10
     b2 += 1
+    print("done")
     return b1, b2, c, d
 
 def e_fun(a, b, c, d):
