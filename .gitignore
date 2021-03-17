@@ -54,6 +54,6 @@ html/*
 TopologicDoc.conf
 pysrc/_topylogic.so
 pysrc/topylogic.py
-pysrc/topylogic_wrap.c
+pysrc/topylogic_wrap.*
 
 
