@@ -109,19 +109,29 @@
     }
     int modify_edge(PyObject *f = NULL, PyObject *glbl = NULL) {
         if ((glbl && PyList_Check(glbl)) || (f && !PyCallable_Check(f))) return -1;
-        if (f) ((struct glbl_args *) $self->glbl)->py_callback = f;
-        if (glbl) ((struct glbl_args *) $self->glbl)->glbl = glbl;
-        return 1;
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        if (f) g->py_callback = f;
+        else g->py_callback = ((struct glbl_args *) $self->glbl)->py_callback;
+        if (glbl) g->glbl = glbl;
+        else g->glbl = ((struct glbl_args *) $self->glbl)->glbl;
+
+        return modify_edge($self->a, $self->b, edge_f, g);
     }
     int set_f(PyObject *f) {
         if(!PyCallable_Check(f)) return -1;
-        ((struct glbl_args *) $self->glbl)->py_callback = f;
-        return 1;
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        g->py_callback = f;
+        g->glbl = ((struct glbl_args *) $self->glbl)->glbl;
+
+        return modify_edge($self->a, $self->b, edge_f, g);
     }
     int set_glbl(PyObject *glbl = NULL) {
         if (PyList_Check(glbl)) return -1;
-        ((struct glbl_args *) $self->glbl)->glbl = glbl;
-        return 1;
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        g->glbl = glbl;
+        g->py_callback = ((struct glbl_args *) $self->glbl)->py_callback;
+
+        return modify_edge($self->a, $self->b, edge_f, g);
     }
 };
 
@@ -174,27 +184,30 @@
 
     int modify_bi_edge(PyObject *f = NULL, PyObject *glbl = NULL) {
         if ((glbl && PyList_Check(glbl)) || (f != NULL && !PyCallable_Check(f))) return -1;
-        if (glbl) {
-            ((struct glbl_args *) $self->edge_a_to_b)->glbl = glbl;
-            ((struct glbl_args *) $self->edge_b_to_a)->glbl = glbl;
-        }
-        if (f) {
-            ((struct glbl_args *) $self->edge_a_to_b)->py_callback = f;
-            ((struct glbl_args *) $self->edge_b_to_a)->py_callback = f;
-        }
-        return 1;
+        
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        if (f) g->py_callback = f;
+        else g->py_callback = ((struct glbl_args *) $self->edge_a_to_b->glbl)->py_callback;
+        if (glbl) g->glbl = glbl;
+        else g->glbl = ((struct glbl_args *) $self->edge_a_to_b->glbl)->glbl;
+
+        return modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b, edge_f, g);
     }
     int set_f(PyObject *f) {
         if (!PyCallable_Check(f)) return -1;
-        ((struct glbl_args *) $self->edge_a_to_b)->py_callback = f;
-        ((struct glbl_args *) $self->edge_b_to_a)->py_callback = f;
-        return 1;
+
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        g->glbl = ((struct glbl_args *) $self->edge_a_to_b->glbl)->glbl;
+        g->py_callback = f;
+        return modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b, edge_f, g);
     }
     int set_glbl(PyObject *glbl = NULL) {
         if (PyList_Check(glbl)) return -1;
-        ((struct glbl_args *) $self->edge_a_to_b)->glbl = glbl;
-        ((struct glbl_args *) $self->edge_b_to_a)->glbl = glbl;
-        return 1;
+
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        g->glbl = glbl;
+        g->py_callback = ((struct glbl_args *) $self->edge_a_to_b->glbl)->py_callback;
+        return modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b, edge_f, g);;
     }
 };
 
@@ -217,19 +230,24 @@
     }
     int modify_vertex(PyObject *f, PyObject *glbl) {
         if (PyList_Check(glbl) || !PyCallable_Check(f)) return -1;
-        ((struct glbl_args *) $self->glbl)->py_callback = f;
-        ((struct glbl_args *) $self->glbl)->glbl = glbl;
-        return 1;
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        g->glbl = glbl;
+        g->py_callback = f;
+        return modify_vertex($self, vertex_f, g);
     }
     int modify_f(PyObject *f) {
         if (!PyCallable_Check(f)) return -1;
-        ((struct glbl_args *) $self->glbl)->py_callback = f;
-        return 1;
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        g->glbl = ((struct glbl_args *) $self->glbl)->glbl;
+        g->py_callback = f;
+        return modify_vertex($self, vertex_f, g);
     }
     int modify_glbl(PyObject *glbl) {
         if (PyList_Check(glbl)) return -1;
-        ((struct glbl_args *) $self->glbl)->glbl = glbl;
-        return 1;
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        g->glbl = glbl;
+        g->py_callback = ((struct glbl_args *) $self->glbl)->py_callback;
+        return modify_vertex($self, vertex_f, g);
     }
     int modify_shared_edge_vars(PyObject *edge_vars) {
         if (PyList_Check(edge_vars)) return -1;
