@@ -20,11 +20,14 @@ a.preorder(s)
 print(s.pop())
 print(s.pop())
 
+a.destroy()
+s.destroy()
+
 def v_fun(a, b1, b2, c, d):
     i = stack()
     a.vertices.preorder(i)
-    print("a: ", i.pop_vertex().id, " b: ", b1, " ", b2, " c: ", c, " d: ", d)
-    return 1
+    m = mod_vertex_request(a.vertices.find_vertex(1), v_fun, vertex_result((2,3), 0))
+    print("a: ", i.length, " b: ", b1, " ", b2, " c: ", c, " d: ", d)
 
 def e_fun(a, b, c, d):
     print(a, b, c, d)
@@ -36,7 +39,7 @@ def e_fun(a, b, c, d):
 g = graph(max_loop=10, context=topylogic.SINGLE)
 v1 = vertex(g, v_fun, 0, (0,1))
 v2 = vertex(g, v_fun, 1, (0,1))
-e = edge(v1, v2, e_fun)
+e = edge(v1, v2, e_fun, (0, 0))
 vr1 = vertex_result((1, 2), 3)
 vr2 = vertex_result(("ji", 3), 4)
 g.set_starting_ids([0])
@@ -49,7 +52,7 @@ g.run([vr1])
 #print(g.set_starting_ids([1, 2, 3]))
 #print(topylogic.SWITCH)
 
-vr = vertex_result((1, 2), 3)
+#vr = vertex_result((1, 2), 3)
 #print(vr.get_vertex_argv())
 #vr.set_edge_argv((2, 3, 4))
 #print(vr.get_edge_argv())

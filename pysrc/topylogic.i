@@ -76,8 +76,8 @@ void generic_f(void *glbl) {
     stack() {
         return init_stack();
     }
-
-    ~stack() {
+    ~stack() {}
+    void destroy() {
         destroy_stack($self);
     }
 
@@ -137,7 +137,8 @@ void generic_f(void *glbl) {
     AVLTree() {
         return init_avl();
     }
-    ~AVLTree() {
+    ~AVLTree() {}
+    void destroy() {
         destroy_avl($self);
     }
     int insert(PyObject *data, PyObject *id) {
@@ -234,9 +235,11 @@ void generic_f(void *glbl) {
         if(!PyCallable_Check(f)) return NULL;
         return create_edge(a, b, edge_f, g);
     }
-    ~edge() {
+    ~edge() {}
+    void destroy() {
         remove_edge($self->a, $self->b);
     }
+
     int modify_edge(PyObject *f = NULL, PyObject *glbl = NULL) {
         if ((glbl && PyList_Check(glbl)) || (f && !PyCallable_Check(f))) return -1;
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
@@ -309,7 +312,8 @@ void generic_f(void *glbl) {
         bi->edge_b_to_a = edge_b_to_a;
         return bi;
     }
-    ~bi_edge() {
+    ~bi_edge() {}
+    void destroy() {
         ((struct glbl_args *) $self->edge_a_to_b->glbl)->glbl = NULL;
         Py_XDECREF(((struct glbl_args *) $self->edge_a_to_b->glbl)->py_callback);
         ((struct glbl_args *) $self->edge_a_to_b->glbl)->py_callback = NULL;
@@ -368,7 +372,8 @@ void generic_f(void *glbl) {
         v->graph = graph;
         return v;
     }
-    ~vertex() {
+    ~vertex() {}
+    void destroy() {
         struct graph *g = $self->graph;
         $self->graph = NULL;
         ((struct glbl_args *) $self->glbl)->glbl = NULL;
@@ -427,18 +432,17 @@ void generic_f(void *glbl) {
         vr->vertex_size = v_s;
         vr->edge_size = e_s;
 
-        fprintf(stderr, "%p\n", vr);
         return vr;
     }
     
-    ~vertex_result() {
+    ~vertex_result() {}
+    void destroy() {
         if(!$self) return;
         $self->vertex_argv = NULL;
         $self->edge_argv = NULL;
         free($self);
         $self = NULL;
     }
-    
     void set_vertex_argv(PyObject *vertex_argv) {
         if (PyList_Check(vertex_argv)) return;
         if (PyTuple_Check(vertex_argv))
@@ -476,7 +480,8 @@ void generic_f(void *glbl) {
             return graph_init(max_state_changes, snapshot_timestamp, max_loop, lvl_verbose, context, mem_option);
         }
     
-    ~graph() {
+    ~graph() {}
+    void destroy() {
         destroy_graph($self);
     }
 
@@ -563,7 +568,8 @@ void generic_f(void *glbl) {
         v->glbl = g;
         return v;
     }
-    ~vertex_request() {
+    ~vertex_request() {}
+    void destroy() {
         $self->graph = NULL;
         $self->id = 0;
         $self->f = NULL;
@@ -573,6 +579,7 @@ void generic_f(void *glbl) {
         $self->glbl = NULL;
         free($self);
     }
+    
 };
 
 %extend mod_vertex_request {
@@ -587,7 +594,9 @@ void generic_f(void *glbl) {
         v->glbl = g;
         return v;   
     }
-    ~mod_vertex_request() {
+    ~mod_vertex_request() {}
+    void destroy() {
+        if (!$self) return;
         $self->vertex = NULL;
         $self->f = NULL;
         ((struct glbl_args *) $self->glbl)->glbl = NULL;
@@ -606,7 +615,8 @@ void generic_f(void *glbl) {
         v->edge_vars = edge_vars;
         return v;   
     }
-    ~mod_edge_vars_request() {
+    ~mod_edge_vars_request() {}
+    void destroy() {
         $self->vertex = NULL;
         $self->edge_vars = NULL;
         free($self);
@@ -620,7 +630,8 @@ void generic_f(void *glbl) {
         v->graph = graph;
         return v;   
     }
-    ~destroy_vertex_request() {
+    ~destroy_vertex_request() {}
+    void destroy() {
         $self->vertex = NULL;
         $self->graph = NULL;
         free($self);
@@ -634,7 +645,8 @@ void generic_f(void *glbl) {
         v->graph = graph;
         return v;   
     }
-    ~destroy_vertex_id_request() {
+    ~destroy_vertex_id_request() {}
+    void destroy() {
         $self->id = 0;
         $self->graph = NULL;
         free($self);
@@ -654,7 +666,8 @@ void generic_f(void *glbl) {
         e->glbl = g;
         return e;
     }
-    ~edge_request() {
+    ~edge_request() {}
+    void destroy() {
         $self->a = NULL;
         $self->b = NULL;
         $self->f = NULL;
@@ -673,7 +686,8 @@ void generic_f(void *glbl) {
         e->b = b;
         return e;
     }
-    ~destroy_edge_request() {
+    ~destroy_edge_request() {}
+    void destroy() {
         $self->a = NULL;
         $self->b = NULL;
         free($self);
@@ -687,7 +701,8 @@ void generic_f(void *glbl) {
         e->id = id;
         return e;
     }
-    ~destroy_edge_id_request() {
+    ~destroy_edge_id_request() {}
+    void destroy() {
         $self->a = NULL;
         $self->id = 0;
         free($self);
