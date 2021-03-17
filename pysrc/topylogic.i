@@ -92,7 +92,36 @@ void generic_f(void *glbl) {
 
     PyObject *pop() {
         PyObject *ret = pop($self);
-        fprintf(stderr, "%p\n", ret);
+        if (!ret) return Py_None;
+        return ret;
+    }
+
+    PyObject *get_vertex(PyObject *index) {
+        if(!PyLong_Check(index))
+            return Py_None;
+        int i = (int) PyLong_AsLong(index);
+        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(get($self, i)), SWIGTYPE_p_vertex, 1);
+        if (!ret) return Py_None;
+        return ret;
+    }
+
+    PyObject *pop_vertex() {
+        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(pop($self)), SWIGTYPE_p_vertex, 1);
+        if (!ret) return Py_None;
+        return ret;
+    }
+
+    PyObject *get_edge(PyObject *index) {
+        if(!PyLong_Check(index))
+            return Py_None;
+        int i = (int) PyLong_AsLong(index);
+        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(get($self, i)), SWIGTYPE_p_edge, 1);
+        if (!ret) return Py_None;
+        return ret;
+    }
+
+    PyObject *pop_edge() {
+        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(pop($self)), SWIGTYPE_p_edge, 1);
         if (!ret) return Py_None;
         return ret;
     }
@@ -129,11 +158,47 @@ void generic_f(void *glbl) {
         return ret;
     }
 
+    PyObject *remove_ID_vertex(PyObject * id) {
+        if (!PyLong_Check(id))
+            return Py_None;
+        int i = (int) PyLong_AsLong(id);
+        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(remove_ID($self, i)), SWIGTYPE_p_vertex, 1);
+        if (!ret) return Py_None;
+        return ret;
+    }
+
+    PyObject *remove_ID_edge(PyObject * id) {
+        if (!PyLong_Check(id))
+            return Py_None;
+        int i = (int) PyLong_AsLong(id);
+        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(remove_ID($self, i)), SWIGTYPE_p_edge, 1);
+        if (!ret) return Py_None;
+        return ret;
+    }
+
     PyObject *find(PyObject *id) {
         if (!PyLong_Check(id))
             return Py_None;
         int i = (int) PyLong_AsLong(id);
         PyObject *ret = find($self, i);
+        if (!ret) return Py_None;
+        return ret;
+    }
+    
+    PyObject *find_vertex(PyObject *id) {
+        if (!PyLong_Check(id))
+            return Py_None;
+        int i = (int) PyLong_AsLong(id);
+        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(find($self, i)), SWIGTYPE_p_vertex, 1);
+        if (!ret) return Py_None;
+        return ret;
+    }
+
+    PyObject *find_edge(PyObject *id) {
+        if (!PyLong_Check(id))
+            return Py_None;
+        int i = (int) PyLong_AsLong(id);
+        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(find($self, i)), SWIGTYPE_p_edge, 1);
         if (!ret) return Py_None;
         return ret;
     }

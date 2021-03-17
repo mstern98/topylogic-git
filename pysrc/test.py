@@ -1,6 +1,5 @@
 from topylogic import *
 import topylogic
-import topylogic_type
 
 s = stack()
 s.push(1)
@@ -24,7 +23,7 @@ print(s.pop())
 def v_fun(a, b1, b2, c, d):
     i = stack()
     a.vertices.preorder(i)
-    print("a: ", i, " b: ", b1, " ", b2, " c: ", c, " d: ", d)
+    print("a: ", i.pop_vertex().id, " b: ", b1, " ", b2, " c: ", c, " d: ", d)
     return 1
 
 def e_fun(a, b, c, d):
