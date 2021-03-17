@@ -16,9 +16,13 @@ struct bi_edge
 
 struct glbl_args
 {
-    struct void *glbl;
+    void *glbl;
     PyObject *py_callback;
 };
+
+extern int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *const edge_vars_b);
+extern void vertex_f(struct graph *graph, struct vertex_result* args, void* glbl, void* edge_vars);
+extern void generic_f(void *glbl);
 
 #ifdef __cplusplus
 }
