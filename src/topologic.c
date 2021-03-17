@@ -139,6 +139,7 @@ int run_single(struct graph *graph, struct vertex_result **init_vertex_args)
         if ((graph->max_state_changes != -1 && graph->state_count >= graph->max_state_changes) ||
             (graph->max_loop != -1 && iloop >= graph->max_loop))
         {
+            fprintf(stderr, "?\n");
             graph->state = TERMINATE;
             graph->num_vertices = 0;
             print_graph(graph);

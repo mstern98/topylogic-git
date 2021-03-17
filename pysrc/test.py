@@ -24,10 +24,11 @@ a.destroy()
 s.destroy()
 
 def v_fun(a, b1, b2, c, d):
-    i = stack()
-    a.vertices.preorder(i)
-    m = mod_vertex_request(a.vertices.find_vertex(1), v_fun, vertex_result((2,3), 0))
-    print("a: ", i.length, " b: ", b1, " ", b2, " c: ", c, " d: ", d)
+    #i = stack()
+    #a.vertices.preorder(i)
+    #m = mod_vertex_request(a.vertices.find_vertex(1), v_fun, (2,3))
+    #g.submit_request(topylogic.MOD_VERTEX, m)
+    print("a: ", a, " b: ", b1, " ", b2, " c: ", c, " d: ", d)
 
 def e_fun(a, b, c, d):
     print(a, b, c, d)
@@ -36,10 +37,11 @@ def e_fun(a, b, c, d):
 #vf = topylogic_function(v)
 #ef = topylogic_function(e)
 
-g = graph(max_loop=10, context=topylogic.SINGLE)
+g = graph(max_state_changes=5, max_loop=3, context=topylogic.NONE)
 v1 = vertex(g, v_fun, 0, (0,1))
-v2 = vertex(g, v_fun, 1, (0,1))
-e = edge(v1, v2, e_fun, (0, 0))
+v2 = vertex(g, v_fun, 1, (0,2))
+e1 = edge(v1, v2, e_fun, (0, 0))
+e2 = edge(v2, v1, e_fun, (0, 2))
 vr1 = vertex_result((1, 2), 3)
 vr2 = vertex_result(("ji", 3), 4)
 g.set_starting_ids([0])
