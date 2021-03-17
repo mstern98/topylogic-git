@@ -1,6 +1,6 @@
 from topylogic import *
 import topylogic
-import topylogic_type
+##import topylogic_type
 
 s = stack()
 s.push(1)
