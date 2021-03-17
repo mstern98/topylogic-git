@@ -10,10 +10,17 @@ int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *co
     //Make the callback to py_callback happen
     //Rinse and repeat for vertex_f and generic_f
 		//
-		
+	void** arg2 = malloc(sizeof(void*)*4);
+	arg2[0] = args;
+	arg2[1] = glbl;
+	arg2[2] = (void*)edge_vars_a;
+	arg2[3] = (void*)edge_vars_b;
 
 
-	void* result = PyObject_CallObject(py_callback, args, glbl_, edge_vars_a, edge_vars_b);
+
+	void* result = PyObject_CallObject(py_callback, arg2);
+	free(arg2);
+	arg2=NULL;
 
 	return result == NULL ? -1 : 0;
 }
