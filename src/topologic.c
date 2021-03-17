@@ -33,7 +33,6 @@ int start_set(struct graph *graph, int id[], int num_vertices)
         topologic_debug("%s;%s;%d", "start_set", "invalid number of vertices", -1);
         return -1;
     }
-
     while (pop(graph->start) != NULL)
     {
     }

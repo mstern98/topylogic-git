@@ -358,6 +358,7 @@
             PyObject *o = PyList_GetItem(id, i);
             if (!PyInt_Check(o)) return -1;
             ids[i] = PyInt_AsLong(o);
+            fprintf(stderr, "%d\n", ids[i]);
         }
         return start_set($self, ids, num_vertices);
     }
@@ -383,6 +384,10 @@
             $1[i] = (struct vertex_result *) (argp);
         }
         $1[size] = NULL;
+    }
+    
+    %typemap(freearg) struct vertex_result **{
+        free($1);
     }
 
     int run(struct vertex_result **init_vertex_args) {

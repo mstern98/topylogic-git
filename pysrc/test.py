@@ -23,7 +23,7 @@ print(s.pop())
 
 def v_fun(a, b1, b2, c, d):
     #g = _graph.from_address(a)
-    print("HI")
+    print("HILO")
     print("a: ", a, " b: ", b1, " ", b2, " c: ", c, " d: ", d)
     return 1
 
@@ -34,13 +34,14 @@ def e_fun(a, b, c, d):
 #vf = topylogic_function(v)
 #ef = topylogic_function(e)
 
-g = graph(max_loop=10)
+g = graph(max_loop=10, context=topylogic.NONE)
 v1 = vertex(g, v_fun, 0, (0,1))
 v2 = vertex(g, v_fun, 1, (0,1))
 e = edge(v1, v2, e_fun)
-vr = vertex_result((1, 2), 3)
-g.set_starting_ids([0])
-g.run([vr])
+vr1 = vertex_result((1, 2), 3)
+vr2 = vertex_result(("ji", 3), 4)
+g.set_starting_ids([0, 1])
+g.run([vr1, vr2])
 
 
 #print("v: ", v.test(), v.test())

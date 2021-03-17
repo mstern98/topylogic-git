@@ -15,7 +15,6 @@ int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *co
     if (edge_vars_b) PyTuple_SetItem(py_args, 3, (PyObject *) edge_vars_b);
     else PyTuple_SetItem(py_args, 3, Py_None);
 
-
 	PyObject *result = PyObject_CallObject(py_callback, py_args);
     
     Py_DECREF(py_args);
