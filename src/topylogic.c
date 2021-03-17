@@ -10,11 +10,11 @@ int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *co
     //Make the callback to py_callback happen
     //Rinse and repeat for vertex_f and generic_f
 		//
-	struct edgeArgs* edgy = malloc(sizeof(struct edgeArgs));
+	struct edge_args *edgy = malloc(sizeof(struct edge_args));
 	edgy->args = args;
 	edgy->glbl = glbl_;
-	edgy->edge_vars_a = (void*)edge_vars_a;
-	edgy->edge_vars_b = (void*)edge_vars_b;
+	edgy->edge_vars_a = (void *)edge_vars_a;
+	edgy->edge_vars_b = (void *)edge_vars_b;
 
 
 
@@ -29,11 +29,11 @@ int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *co
 
 
 void vertex_f(struct graph* graph, struct vertex_result* args, void* glbl, void* edge_vars){
-	struct glbl_args* g = (struct glbl_args *) glbl;
+	struct glbl_args *g = (struct glbl_args *) glbl;
 	PyObject *py_callback = g->py_callback;
 	void *glbl_ = g->glbl;
 	//
-	struct vertexArgs *vert = malloc(sizeof(struct vertexArgs));
+	struct vertex_args *vert = malloc(sizeof(struct vertex_args));
 	vert->graph = graph;
 	vert->args = args;
 	vert-> glbl = glbl_;

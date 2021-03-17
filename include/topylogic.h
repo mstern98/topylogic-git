@@ -24,18 +24,18 @@ extern int edge_f(void *args, void *glbl, const void *const edge_vars_a, const v
 extern void vertex_f(struct graph *graph, struct vertex_result* args, void* glbl, void* edge_vars);
 extern void generic_f(void *glbl);
 
-struct edgeArgs{
-	void* args;
-	void* glbl;
-	void* edge_vars_a;
-	void* edge_vars_b;
+struct edge_args{
+	void *args;
+	void *glbl;
+	void *edge_vars_a;
+	void *edge_vars_b;
 };
 
-struct vertexArgs{
-	struct graph* graph;
-	struct vertex_result* args;
-	void* glbl;
-	void* edge_vars;
+struct vertex_args{
+	struct graph *graph;
+	struct vertex_result *args;
+	void *glbl;
+	void *edge_vars;
 };
 
 #ifdef __cplusplus
