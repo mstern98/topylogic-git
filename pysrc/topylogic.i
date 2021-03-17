@@ -7,28 +7,30 @@
 #include "../include/topologic.h"
 
 int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *const edge_vars_b) {
-    int res = 0;
+    int result = 0;
     struct glbl_args *g = (struct glbl_args *) glbl;
     PyObject *py_callback = g->py_callback;
     void *glbl_ = g->glbl;
 
     PyObject *py_args = PyTuple_New(4);
-    PyTuple_SetItem(py_args, 0, args);
-    PyTuple_SetItem(py_args, 1, glbl_);
-    if (edge_vars_a) PyTuple_SetItem(py_args, 2, (PyObject *) edge_vars_a);
+    PyTuple_SetItem(py_args, 0, Py_BuildValue("O", args));
+    PyTuple_SetItem(py_args, 1, Py_BuildValue("O", glbl_));
+    if (edge_vars_a) PyTuple_SetItem(py_args, 2, Py_BuildValue("O", edge_vars_a));
     else PyTuple_SetItem(py_args, 2, Py_None);
-    if (edge_vars_b) PyTuple_SetItem(py_args, 3, (PyObject *) edge_vars_b);
+    if (edge_vars_b) PyTuple_SetItem(py_args, 3, Py_BuildValue("O", edge_vars_b));
     else PyTuple_SetItem(py_args, 3, Py_None);
 
-	PyObject *result = PyObject_CallObject(py_callback, py_args);
+	PyObject *res = PyObject_CallObject(py_callback, py_args);
 
     Py_DECREF(py_args);
     if (!result) 
         PyErr_Print();
 
-    PyArg_Parse(result, "i", &res);
-    Py_DECREF(result);
-    return res;
+    result = (int) PyLong_AsLong(PyTuple_GetItem(res, 0));
+    g->glbl = PyTuple_GetItem(res, 1);
+
+    Py_DECREF(res);
+    return result;
 }
 
 
@@ -41,21 +43,27 @@ void vertex_f(struct graph* graph, struct vertex_result* args, void* glbl, void*
         
     PyObject *py_args = PyTuple_New(5);
     PyTuple_SetItem(py_args, 0, py_graph);
-    PyTuple_SetItem(py_args, 1, args->vertex_argv);
-    PyTuple_SetItem(py_args, 2, args->edge_argv);
-    if (glbl) PyTuple_SetItem(py_args, 3, glbl_);
+    PyTuple_SetItem(py_args, 1, Py_BuildValue("O", args->vertex_argv));
+    PyTuple_SetItem(py_args, 2, Py_BuildValue("O", args->edge_argv));
+    if (glbl) PyTuple_SetItem(py_args, 3, Py_BuildValue("O", glbl_));
     else PyTuple_SetItem(py_args, 3, Py_None);
-    if (edge_vars) PyTuple_SetItem(py_args, 4, edge_vars);
+    if (edge_vars) PyTuple_SetItem(py_args, 4, Py_BuildValue("O", edge_vars));
     else PyTuple_SetItem(py_args, 4, Py_None);
 
 	void* res = PyObject_CallFunction(py_callback, "O", py_args);
-
     if (!res)
         PyErr_Print();
+
+    args->vertex_argv = PyTuple_GetItem(res, 0);
+    args->edge_argv = PyTuple_GetItem(res, 1);
+    g->glbl = PyTuple_GetItem(res, 2);
+    edge_vars = PyTuple_GetItem(res, 3);
+
     Py_DECREF(res);
     Py_DECREF(py_graph);
     Py_DECREF(py_args);
 }
+
 
 
 void generic_f(void *glbl) {
@@ -63,7 +71,7 @@ void generic_f(void *glbl) {
 	PyObject *py_callback = g->py_callback;
 	void* glbl_ = g->glbl;
 
-	void* res = PyObject_CallObject(py_callback, (PyObject *) glbl_);
+	void* res = PyObject_CallObject(py_callback, Py_BuildValue("O", glbl_));
     if (!res)
         PyErr_Print();
     Py_DECREF(res);
