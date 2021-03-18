@@ -12,7 +12,7 @@
 #include "./request.h"
 #include "./graph.h"
 #include "./fireable.h"
-#include <Python.h>
+
 
 #define PTHREAD_SLEEP_TIME 50 //milliseconds
 

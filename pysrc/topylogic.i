@@ -8,10 +8,14 @@
 
 int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *const edge_vars_b) {
     int result = 0;
+
     struct glbl_args *g = (struct glbl_args *) glbl;
     PyObject *py_callback = g->py_callback;
     void *glbl_ = g->glbl;
 
+    Py_BEGIN_ALLOW_THREADS
+    PyGILState_STATE state = PyGILState_Ensure();
+    
     PyObject *py_args = PyTuple_New(4);
     PyTuple_SetItem(py_args, 0, Py_BuildValue("O", args));
     PyTuple_SetItem(py_args, 1, Py_BuildValue("O", glbl_));
@@ -30,17 +34,23 @@ int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *co
     g->glbl = PyTuple_GetItem(res, 1);
 
     Py_DECREF(res);
+    
+    PyGILState_Release(state); 
+    Py_END_ALLOW_THREADS
     return result;
 }
 
 void vertex_f(struct graph *graph, struct vertex_result *args, void *glbl, void *edge_vars) {
-	struct glbl_args *g = (struct glbl_args *) glbl;
+    struct glbl_args *g = (struct glbl_args *) glbl;
     struct edge_vars *ev = (struct edge_vars *) edge_vars;
 	PyObject *py_callback = g->py_callback;
 	void *glbl_ = g->glbl;
 
     PyObject *py_graph = SWIG_NewPointerObj(SWIG_as_voidptr(graph), SWIGTYPE_p_graph, 1);
-        
+    
+    Py_BEGIN_ALLOW_THREADS
+    PyGILState_STATE state = PyGILState_Ensure();
+
     PyObject *py_args = PyTuple_New(5);
     PyTuple_SetItem(py_args, 0, py_graph);
     PyTuple_SetItem(py_args, 1, Py_BuildValue("O", args->vertex_argv));
@@ -49,8 +59,9 @@ void vertex_f(struct graph *graph, struct vertex_result *args, void *glbl, void 
     else PyTuple_SetItem(py_args, 3, Py_None);
     if (edge_vars) PyTuple_SetItem(py_args, 4, Py_BuildValue("O", ev->vars));
     else PyTuple_SetItem(py_args, 4, Py_None);
+	
+    void *res = PyObject_CallFunction(py_callback, "O", py_args);
 
-	void *res = PyObject_CallFunction(py_callback, "O", py_args);
     if (!res)
         PyErr_Print();
 
@@ -63,6 +74,9 @@ void vertex_f(struct graph *graph, struct vertex_result *args, void *glbl, void 
     Py_DECREF(res);
     Py_DECREF(py_graph);
     Py_DECREF(py_args);
+    
+    PyGILState_Release(state);
+    Py_END_ALLOW_THREADS
 }
 
 void generic_f(void *glbl) {
@@ -77,26 +91,46 @@ void generic_f(void *glbl) {
 }
 
 struct fireable *create_fireable(struct graph* g, struct vertex* v, struct vertex_result* args, enum STATES color, int iloop) {
+    topologic_debug("%s;graph %p;vertex %p;vertex_results %p;color %d;iloop %d", "create_fireable", g, v, args, color, iloop);
     struct fireable *fireable = (struct fireable*) malloc(sizeof(struct fireable));
     if (!fireable) return NULL;
 
     fireable->args = (struct vertex_result*) malloc(sizeof(struct vertex_result));
     if (!fireable->args) {
+        topologic_debug("%s;%s;%p", "create_fireable", "failed to malloc", NULL);
         free(fireable);
         fireable = NULL;
     }
 
-    fireable->args->vertex_argv = args->vertex_argv;
     fireable->args->vertex_size = args->vertex_size;
-    fireable->args->edge_argv = args->edge_argv;
     fireable->args->edge_size = args->edge_size;
 
     fireable->graph = g;
     fireable->vertex = v;
     fireable->color = color;
     fireable->iloop = iloop;
+   
+    Py_BEGIN_ALLOW_THREADS
+    PyGILState_STATE state = PyGILState_Ensure();
+    PyObject *copy_module = PyImport_ImportModule("copy");
+    PyObject *copy_dict   = PyModule_GetDict(copy_module);
+    PyObject *copy_obj = PyDict_GetItemString(copy_dict, "deepcopy");
 
-    fprintf(stderr, "work\n");
+    PyObject *vertex_argv = PyObject_CallFunction(copy_obj, "(O)", args->vertex_argv);
+    fireable->args->vertex_argv = vertex_argv;
+    Py_DECREF(args->vertex_argv);
+    PyObject *edge_argv = PyObject_CallFunction(copy_obj, "(O)", args->edge_argv);
+    fireable->args->edge_argv = edge_argv;
+    Py_DECREF(args->edge_argv);
+
+    Py_DECREF(copy_module);
+    Py_DECREF(copy_dict);
+    Py_DECREF(copy_obj);
+
+    PyGILState_Release(state);
+    Py_END_ALLOW_THREADS
+
+    topologic_debug("%s;%s;%p", "create_fireable", "succeeded", fireable);
     return fireable;
 }
 

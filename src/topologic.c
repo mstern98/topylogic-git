@@ -398,7 +398,6 @@ int fire(struct graph *graph, struct vertex *vertex, struct vertex_result *args,
         retval = -1;
         goto clean_fire;
     }
-    
     pthread_mutex_lock(&vertex->lock);
 
     if (graph->state == TERMINATE)
@@ -415,7 +414,6 @@ int fire(struct graph *graph, struct vertex *vertex, struct vertex_result *args,
     }
 
     (vertex->f)(graph, args, vertex->glbl, vertex->shared->vertex_data);
-
     if (graph->max_state_changes != -1 && graph->state_count + 1 >= graph->max_state_changes)
         goto exit_fire;
 
