@@ -52,6 +52,9 @@ e2 = edge(v2, v1, e_fun, (0, 2))
 vr1 = vertex_result((1, 2), 3)
 vr2 = vertex_result(("ji", 3), 4)
 g.set_starting_ids([0])
+
+f = fireable(g, v1, vr1, topylogic.BLACK, 2);
+
 g.run([vr1])
 g.destroy()
 

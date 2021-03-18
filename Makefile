@@ -35,4 +35,5 @@ clean:
 	-rm -f $(TOPYLOGIC_O) 
 	-rm -f $(TOPYLOGIC_WRAP)
 	-rm -f pysrc/state_*
+	-rm -f pysrc/*.pyc
 

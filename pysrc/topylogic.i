@@ -79,6 +79,18 @@ void generic_f(void *glbl) {
 
 %}
 
+
+%include "../include/fireable.h"
+%extend fireable{
+  fireable(struct graph* g, struct vertex* v, struct vertex_result* args, enum STATES color, int iloop){
+    return create_fireable(g, v, args, color, iloop);
+  }
+
+
+};
+
+
+
 %include "../include/stack.h"
 %extend stack{
     stack() {
