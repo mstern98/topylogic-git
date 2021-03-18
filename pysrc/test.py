@@ -44,37 +44,19 @@ def e_fun(a, b, c, d):
 #vf = topylogic_function(v)
 #ef = topylogic_function(e)
 
-g = graph(max_state_changes=5, max_loop=5, context=topylogic.SWITCH)
+g = graph(max_state_changes=5, max_loop=5, context=topylogic.NONE)
 v1 = vertex(g, v_fun, 0, (0,1))
 v2 = vertex(g, v_fun, 1, (0,2))
 e1 = edge(v1, v2, e_fun, (0, 0))
 e2 = edge(v2, v1, e_fun, (0, 2))
 vr1 = vertex_result((1, 2), 3)
 vr2 = vertex_result(("ji", 3), 4)
+
+#f = fireable(g, v1, vr1, topylogic.BLACK, 2);
+#print(f)
+
 g.set_starting_ids([0])
-
-f = fireable(g, v1, vr1, topylogic.BLACK, 2);
-
 g.run([vr1])
 g.destroy()
 
-#print("v: ", v.test(), v.test())
 
-#print(g.max_loop)
-#print(g.set_starting_ids([1, 2, 3]))
-#print(topylogic.SWITCH)
-
-#vr = vertex_result((1, 2), 3)
-#print(vr.get_vertex_argv())
-#vr.set_edge_argv((2, 3, 4))
-#print(vr.get_edge_argv())
-#v1 = g.create_vertex(vf.callback_void, 1)
-#v2 = g.create_vertex(vf.callback_void, 2)
-#edge = g.create_edge(v1, v2, ef.callback_int)
-#g.set_start_set([1], 1)
-
-#v = vertex_result("hi", "edge")
-#print(v1.f)
-#print(v1.f(v))
-
-#g.run([v])

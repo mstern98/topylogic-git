@@ -33,7 +33,6 @@ int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *co
     return result;
 }
 
-
 void vertex_f(struct graph *graph, struct vertex_result *args, void *glbl, void *edge_vars) {
 	struct glbl_args *g = (struct glbl_args *) glbl;
     struct edge_vars *ev = (struct edge_vars *) edge_vars;
@@ -77,8 +76,57 @@ void generic_f(void *glbl) {
     Py_DECREF(res);
 }
 
+struct fireable *create_fireable(struct graph* g, struct vertex* v, struct vertex_result* args, enum STATES color, int iloop) {
+    struct fireable *fireable = (struct fireable*) malloc(sizeof(struct fireable));
+    if (!fireable) return NULL;
+
+    fireable->args = (struct vertex_result*) malloc(sizeof(struct vertex_result));
+    if (!fireable->args) {
+        free(fireable);
+        fireable = NULL;
+    }
+
+    fireable->args->vertex_argv = args->vertex_argv;
+    fireable->args->vertex_size = args->vertex_size;
+    fireable->args->edge_argv = args->edge_argv;
+    fireable->args->edge_size = args->edge_size;
+
+    fireable->graph = g;
+    fireable->vertex = v;
+    fireable->color = color;
+    fireable->iloop = iloop;
+
+    fprintf(stderr, "work\n");
+    return fireable;
+}
+
+void destroy_fireable(struct fireable *fireable) {
+    if (!fireable) return;
+    fireable->args = NULL;
+    fireable->graph = NULL;
+    fireable->vertex = NULL;
+    fireable->color = 0;
+    fireable->iloop = 0;
+    free(fireable);
+    fireable = NULL;
+}
+
 %}
 
+%inline %{
+    PyObject *test(PyObject *n) {
+        PyObject *t;
+        PyArg_ParseTuple(n, "O!", NULL, t);
+
+        PyObject *result = (PyObject *) malloc(sizeof(PyObject));
+        
+        memcpy(result, t, sizeof(PyObject));
+
+        //PyBuffer_Release(&t);
+
+        return result;    
+    }
+%}
 
 %include "../include/fireable.h"
 %extend fireable{
@@ -90,8 +138,6 @@ void generic_f(void *glbl) {
         destroy_fireable($self);
     }
 };
-
-
 
 %include "../include/stack.h"
 %extend stack{

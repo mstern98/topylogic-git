@@ -147,6 +147,7 @@ int run_single(struct graph *graph, struct vertex_result **init_vertex_args)
         }
     }
 
+#ifndef SWIG
     if (args->edge_argv)
     {
         free(args->edge_argv);
@@ -157,6 +158,7 @@ int run_single(struct graph *graph, struct vertex_result **init_vertex_args)
         free(args->vertex_argv);
         args->vertex_argv = NULL;
     }
+#endif    
     if (args)
     {
         free(args);
@@ -262,7 +264,9 @@ int run(struct graph *graph, struct vertex_result **init_vertex_args)
         //destroy_graph(graph);
         return -1;
     }
+#ifndef SWIG
     free(init_vertex_args);
+#endif
     init_vertex_args = NULL;
 
     print_graph(graph);
@@ -505,6 +509,8 @@ exit_fire:
         return fire(graph, next_vertex, args, flip_color, iloop_b);
     }
 clean_fire:
+#ifndef SWIG
+    fprintf(stderr, "against me wishes\n");
     if (args->edge_argv)
     {
         free(args->edge_argv);
@@ -515,6 +521,7 @@ clean_fire:
         free(args->vertex_argv);
         args->vertex_argv = NULL;
     }
+#endif
     if (args)
     {
         free(args);
@@ -540,7 +547,7 @@ void *fire_pthread(void *vargp)
     enum STATES color = fireable->color;
     int iloop = fireable->iloop;
 
-    destroy_fireable((struct fireable *) vargp);
+    destroy_fireable(fireable);
     sleep_ms(PTHREAD_SLEEP_TIME);
     int ret_val = fire(graph, v, args, color, iloop);
     topologic_debug("%s;%s;%d", "fire_pthread", "finished", ret_val);
