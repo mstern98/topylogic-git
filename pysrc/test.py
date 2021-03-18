@@ -44,7 +44,7 @@ def e_fun(a, b, c, d):
 #vf = topylogic_function(v)
 #ef = topylogic_function(e)
 
-g = graph(max_state_changes=5, max_loop=5, context=topylogic.SWITCH)
+g = graph(max_state_changes=5, max_loop=5, context=topylogic.SINGLE)
 v1 = vertex(g, v_fun, 0, (0,1))
 v2 = vertex(g, v_fun, 1, (0,2))
 e1 = edge(v1, v2, e_fun, (0, 0))

@@ -90,61 +90,6 @@ void generic_f(void *glbl) {
     Py_DECREF(res);
 }
 
-struct fireable *create_fireable(struct graph* g, struct vertex* v, struct vertex_result* args, enum STATES color, int iloop) {
-    topologic_debug("%s;graph %p;vertex %p;vertex_results %p;color %d;iloop %d", "create_fireable", g, v, args, color, iloop);
-    struct fireable *fireable = (struct fireable*) malloc(sizeof(struct fireable));
-    if (!fireable) return NULL;
-
-    fireable->args = (struct vertex_result*) malloc(sizeof(struct vertex_result));
-    if (!fireable->args) {
-        topologic_debug("%s;%s;%p", "create_fireable", "failed to malloc", NULL);
-        free(fireable);
-        fireable = NULL;
-    }
-
-    fireable->args->vertex_size = args->vertex_size;
-    fireable->args->edge_size = args->edge_size;
-
-    fireable->graph = g;
-    fireable->vertex = v;
-    fireable->color = color;
-    fireable->iloop = iloop;
-   
-    Py_BEGIN_ALLOW_THREADS
-    PyGILState_STATE state = PyGILState_Ensure();
-    PyObject *copy_module = PyImport_ImportModule("copy");
-    PyObject *copy_dict   = PyModule_GetDict(copy_module);
-    PyObject *copy_obj = PyDict_GetItemString(copy_dict, "deepcopy");
-
-    PyObject *vertex_argv = PyObject_CallFunction(copy_obj, "(O)", args->vertex_argv);
-    fireable->args->vertex_argv = vertex_argv;
-    Py_DECREF(args->vertex_argv);
-    PyObject *edge_argv = PyObject_CallFunction(copy_obj, "(O)", args->edge_argv);
-    fireable->args->edge_argv = edge_argv;
-    Py_DECREF(args->edge_argv);
-
-    Py_DECREF(copy_module);
-    Py_DECREF(copy_dict);
-    Py_DECREF(copy_obj);
-
-    PyGILState_Release(state);
-    Py_END_ALLOW_THREADS
-
-    topologic_debug("%s;%s;%p", "create_fireable", "succeeded", fireable);
-    return fireable;
-}
-
-void destroy_fireable(struct fireable *fireable) {
-    if (!fireable) return;
-    fireable->args = NULL;
-    fireable->graph = NULL;
-    fireable->vertex = NULL;
-    fireable->color = 0;
-    fireable->iloop = 0;
-    free(fireable);
-    fireable = NULL;
-}
-
 %}
 
 %inline %{

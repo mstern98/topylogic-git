@@ -81,7 +81,9 @@ int run_single(struct graph *graph, struct vertex_result **init_vertex_args)
     struct edge *edge = NULL;
 
     struct vertex_result *args = init_vertex_args[0];
+#ifndef SWIG
     free(init_vertex_args);
+#endif
     init_vertex_args = NULL;
     struct stack *edges = init_stack();
     if (!edges)
@@ -158,7 +160,7 @@ int run_single(struct graph *graph, struct vertex_result **init_vertex_args)
         free(args->vertex_argv);
         args->vertex_argv = NULL;
     }
-#endif    
+#endif
     if (args)
     {
         free(args);
