@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT WITH bison-exception
 // Copyright © 2020 Matthew Stern, Benjamin Michalowicz
 
+#include "../include/topylogic.h"
 #include "../include/topologic.h"
 
 void sleep_ms(int milliseconds)
@@ -81,9 +82,6 @@ int run_single(struct graph *graph, struct vertex_result **init_vertex_args)
     struct edge *edge = NULL;
 
     struct vertex_result *args = init_vertex_args[0];
-#ifndef SWIG
-    free(init_vertex_args);
-#endif
     init_vertex_args = NULL;
     struct stack *edges = init_stack();
     if (!edges)
@@ -149,18 +147,6 @@ int run_single(struct graph *graph, struct vertex_result **init_vertex_args)
         }
     }
 
-#ifndef SWIG
-    if (args->edge_argv)
-    {
-        free(args->edge_argv);
-        args->edge_argv = NULL;
-    }
-    if (args->vertex_argv)
-    {
-        free(args->vertex_argv);
-        args->vertex_argv = NULL;
-    }
-#endif
     if (args)
     {
         free(args);
@@ -182,6 +168,8 @@ int run(struct graph *graph, struct vertex_result **init_vertex_args)
     }
     if (graph->context == SINGLE)
         return run_single(graph, init_vertex_args);
+
+    Py_BEGIN_ALLOW_THREADS
 
     int success = 0, v_index = 0;
     struct vertex *v = NULL;
@@ -251,7 +239,6 @@ int run(struct graph *graph, struct vertex_result **init_vertex_args)
 
         argv = NULL;
     }
-
     if (!success)
     {
         topologic_debug("%s;%s;%d", "run", "Failed to create threads", -1);
@@ -266,9 +253,7 @@ int run(struct graph *graph, struct vertex_result **init_vertex_args)
         //destroy_graph(graph);
         return -1;
     }
-#ifndef SWIG
-    free(init_vertex_args);
-#endif
+
     init_vertex_args = NULL;
 
     print_graph(graph);
@@ -362,6 +347,8 @@ int run(struct graph *graph, struct vertex_result **init_vertex_args)
             return -1;
         }
     }
+    Py_END_ALLOW_THREADS
+
     topologic_debug("%s;%s;%d", "run", "finished", 0);
     return 0;
 }
@@ -369,6 +356,8 @@ int run(struct graph *graph, struct vertex_result **init_vertex_args)
 int fire(struct graph *graph, struct vertex *vertex, struct vertex_result *args, enum STATES color, int iloop)
 {
     topologic_debug("%s;graph %p;vertex %p;args %p;color %d;iloop %d", "fire", graph, vertex, args, color, iloop);
+    PyGILState_STATE state = PyGILState_Ensure();
+
     int retval = 0;
     struct vertex *next_vertex = NULL;
 
@@ -506,27 +495,16 @@ exit_fire:
         pthread_mutex_unlock(&graph->lock);
         topologic_debug("%s;%s;%p", "fire", "firing next vertex", next_vertex);
         sleep_ms(PTHREAD_SLEEP_TIME);
+        PyGILState_Release(state);
         return fire(graph, next_vertex, args, flip_color, iloop_b);
     }
 clean_fire:
-#ifndef SWIG
-    fprintf(stderr, "against me wishes\n");
-    if (args->edge_argv)
-    {
-        free(args->edge_argv);
-        args->edge_argv = NULL;
-    }
-    if (args->vertex_argv)
-    {
-        free(args->vertex_argv);
-        args->vertex_argv = NULL;
-    }
-#endif
     if (args)
     {
         free(args);
         args = NULL;
     }
+    PyGILState_Release(state);
     topologic_debug("%s;%s;%d", "fire", "finished", retval);
     return retval;
 }
@@ -564,7 +542,7 @@ int switch_vertex(struct graph *graph, struct vertex *vertex, struct vertex_resu
         topologic_debug("%s;%s;%d", "switch_vertex", "failed to create fireable", -1);
         return -1;
     }
-    
+
     int thread_result = 0;
     int thread_attempts = 0;
     pthread_t thread;
@@ -606,6 +584,7 @@ create_switch_threads:
         }
     }
     pthread_detach(thread);
+
     topologic_debug("%s;%s;%d", "switch_vertex", "finished", 0);
     return 0;
 }

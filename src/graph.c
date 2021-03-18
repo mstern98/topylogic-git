@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT WITH bison-exception
 // Copyright © 2020 Matthew Stern, Benjamin Michalowicz
 
+#include "../include/topylogic.h"
 #include "../include/topologic.h"
 
 struct graph *graph_init(int max_state_changes, int snapshot_timestamp, int max_loop, unsigned int lvl_verbose, enum CONTEXT context, enum MEM_OPTION mem_option)
@@ -23,6 +24,10 @@ struct graph *graph_init(int max_state_changes, int snapshot_timestamp, int max_
 	graph->red_locked = 1;
 	graph->black_locked = 1;
 	graph->num_vertices = 0;
+
+    graph->copy_module = PyImport_ImportModule("copy");
+    graph->copy_dict = PyModule_GetDict(graph->copy_module);
+    graph->copy_obj = PyDict_GetItemString(graph->copy_dict, "deepcopy");
 
 	if (pthread_mutex_init(&graph->lock, NULL) < 0)
 	{
@@ -187,6 +192,10 @@ int destroy_graph(struct graph *graph)
                 pthread_cond_wait(&graph->black_fire, &graph->color_lock);
 		}
 	}
+
+    Py_DECREF(graph->copy_obj);
+    Py_DECREF(graph->copy_dict);
+    Py_DECREF(graph->copy_module);
 
 	destroy_graph_avl(graph, graph->vertices);
 	graph->vertices = NULL;

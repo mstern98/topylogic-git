@@ -21,25 +21,16 @@ struct fireable *create_fireable(struct graph* graph, struct vertex* vertex, str
     fireable->color = color;
     fireable->iloop = iloop;
    
-    Py_BEGIN_ALLOW_THREADS
-    PyGILState_STATE state = PyGILState_Ensure();
-    PyObject *copy_module = PyImport_ImportModule("copy");
-    PyObject *copy_dict   = PyModule_GetDict(copy_module);
-    PyObject *copy_obj = PyDict_GetItemString(copy_dict, "deepcopy");
+    PyObject *copy_obj = graph->copy_obj; 
 
     PyObject *vertex_argv = PyObject_CallFunction(copy_obj, "(O)", args->vertex_argv);
     fireable->args->vertex_argv = vertex_argv;
     Py_DECREF(args->vertex_argv);
+    Py_DECREF(vertex_argv);
     PyObject *edge_argv = PyObject_CallFunction(copy_obj, "(O)", args->edge_argv);
     fireable->args->edge_argv = edge_argv;
     Py_DECREF(args->edge_argv);
-
-    Py_DECREF(copy_module);
-    Py_DECREF(copy_dict);
-    Py_DECREF(copy_obj);
-
-    PyGILState_Release(state);
-    Py_END_ALLOW_THREADS
+    Py_DECREF(edge_argv);
 
     topologic_debug("%s;%s;%p", "create_fireable", "success", fireable);
     return fireable;
@@ -61,5 +52,3 @@ int destroy_fireable(struct fireable *fireable) {
     topologic_debug("%s;%s;%d", "destroy_fireable", "success", 0);
     return 0;
 }
-
-
