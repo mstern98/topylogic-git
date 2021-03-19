@@ -79,17 +79,20 @@ Edge take a boolean result as well (0/1) to determine if the state can transitio
 #vertex function
 
 >def fun(graph, vertex_result.vertex_argv, vertex_result.edge_argv, vertex global var, edge shared var)
+
 >	return  vertex_result.vertex_argv, vertex_result.edge_argv, vertex global var, edge shared var
 
 #edge function
 
 >def fun(edge arguments, edge global var, edge shared var with vertex a, edge shared var with vertex b)
+
 >	return boolean result, edge global var
 
 
 #generic function
 
 >def fun(arguments)
+
 >	return
->	
+
 
