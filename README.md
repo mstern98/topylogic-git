@@ -71,28 +71,31 @@ unsafe execution. Thus this mode is UNSAFE. It is safe to use the shared variabl
 in context modes NONE and SINGLE since in NONE vertex b cannot also be active, and in SINGLE there 
 is no threading. 
 
-###Functions
+# Functions
 
 Returning the variables is a way to update the variables
 Edge take a boolean result as well (0/1) to determine if the state can transition from A to B
 
-#vertex function
+## vertex function
 
 >def fun(graph, vertex_result.vertex_argv, vertex_result.edge_argv, vertex global var, edge shared var)
 
 >	return  vertex_result.vertex_argv, vertex_result.edge_argv, vertex global var, edge shared var
 
-#edge function
+## edge function
 
 >def fun(edge arguments, edge global var, edge shared var with vertex a, edge shared var with vertex b)
 
 >	return boolean result, edge global var
 
 
-#generic function
+## generic function
 
 >def fun(arguments)
 
 >	return
 
+# Destroy
 
+Should you not use a variable instantiated (as in not used by graph()) call .destroy() on them.
+Also do graph.destroy() when done with graph.
