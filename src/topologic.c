@@ -358,7 +358,13 @@ int fire(struct graph *graph, struct vertex *vertex, struct vertex_result *args,
     topologic_debug("%s;graph %p;vertex %p;args %p;color %d;iloop %d", "fire", graph, vertex, args, color, iloop);
     
     int retval = 0;
+    enum STATES flip_color = BLACK;
     struct vertex *next_vertex = NULL;
+    struct edge *edge = NULL;
+    struct stack *switch_edges = NULL, *edges = NULL;
+    if (graph->context == SWITCH || graph->context == SWITCH_UNSAFE)
+	    switch_edges = init_stack();
+
 
     if (!graph || !vertex)
     {
@@ -366,8 +372,6 @@ int fire(struct graph *graph, struct vertex *vertex, struct vertex_result *args,
         retval = -1;
         goto clean_fire;
     }
-
-    enum STATES flip_color = BLACK;
 
     if (color == RED)
     {
@@ -404,7 +408,7 @@ int fire(struct graph *graph, struct vertex *vertex, struct vertex_result *args,
     }
 
     PyGILState_STATE state = PyGILState_Ensure();
-
+ 
     (vertex->f)(graph, args, vertex->glbl, vertex->shared->vertex_data);
     if (graph->max_state_changes != -1 && graph->state_count + 1 >= graph->max_state_changes)
     {
@@ -412,54 +416,27 @@ int fire(struct graph *graph, struct vertex *vertex, struct vertex_result *args,
         goto exit_fire;
     }
 
-    struct stack *edges = init_stack();
+    edges = init_stack();
     preorder(vertex->edge_tree, edges);
-    struct edge *edge = NULL;
+
     while ((edge = (struct edge *)pop(edges)) != NULL)
     {
         if (edge->edge_type == BI_EDGE)
-        {
             pthread_mutex_lock(&edge->bi_edge_lock);
-        }
         if ((edge->f)(args->edge_argv, edge->glbl, edge->a_vars, edge->b_vars))
         {
             if (edge->edge_type == BI_EDGE)
-            {
                 pthread_mutex_unlock(&edge->bi_edge_lock);
-            }
             if (graph->context == SWITCH || graph->context == SWITCH_UNSAFE)
-            {
-                int iloop_b = 1;
-                if (edge->b == vertex)
-                    iloop_b = iloop + 1;
-                if (switch_vertex(graph, edge->b, args, flip_color, iloop_b) < 0)
-                {
-                    topologic_debug("%s;%s;%d", "fire", "failed to switch", -1);
-                    retval = -1;
-                    destroy_stack(edges);
-                    edges = NULL;
-                    edge = NULL;
-                    goto exit_fire;
-                }
-                pthread_mutex_lock(&graph->lock);
-                ++(graph->num_vertices);
-                if (flip_color == RED)
-                    ++(graph->red_vertex_count);
-                else if (flip_color == BLACK)
-                    ++(graph->black_vertex_count);
-                pthread_mutex_unlock(&graph->lock);
-                edge->b->is_active = 1;
-            }
+		push(switch_edges, edge);
             else if (graph->context == NONE)
             {
                 next_vertex = edge->b;
                 break;
             }
         }
-        else if (edge->edge_type == BI_EDGE)
-        {
+        if (edge->edge_type == BI_EDGE)
             pthread_mutex_unlock(&edge->bi_edge_lock);
-        }
     }
     destroy_stack(edges);
     edges = NULL;
@@ -501,12 +478,45 @@ exit_fire:
         topologic_debug("%s;%s;%p", "fire", "firing next vertex", next_vertex);
         sleep_ms(PTHREAD_SLEEP_TIME);
         return fire(graph, next_vertex, args, flip_color, iloop_b);
+    } 
+    else if (graph->context == SWITCH || graph->context == SWITCH_UNSAFE) 
+    {
+	    while ((edge = (struct edge *) pop(switch_edges)) != NULL)
+	    {
+		int iloop_b = 1;
+                if (edge->b == vertex)
+                    iloop_b = iloop + 1;
+                if (switch_vertex(graph, edge->b, args, flip_color, iloop_b) < 0)
+                {
+                    topologic_debug("%s;%s;%d", "fire", "failed to switch", -1);
+                    retval = -1;
+                    edge = NULL;
+                    goto clean_fire;
+                }
+                pthread_mutex_lock(&graph->lock);
+                ++(graph->num_vertices);
+                if (flip_color == RED)
+                    ++(graph->red_vertex_count);
+                else if (flip_color == BLACK)
+                    ++(graph->black_vertex_count);
+                pthread_mutex_unlock(&graph->lock);
+                edge->b->is_active = 1;
+	    }
+	    Py_XDECREF(args->edge_argv);
+	    Py_XDECREF(args->vertex_argv);
+	    destroy_stack(switch_edges);
+	    switch_edges = NULL;
     }
 clean_fire:
     if (args)
     {
         free(args);
         args = NULL;
+    }
+    if (switch_edges) 
+    {
+	free(switch_edges);
+	switch_edges = NULL;
     }
     topologic_debug("%s;%s;%d", "fire", "finished", retval);
     return retval;
@@ -587,7 +597,6 @@ create_switch_threads:
         }
     }
     pthread_detach(thread);
-
     topologic_debug("%s;%s;%d", "switch_vertex", "finished", 0);
     return 0;
 }

@@ -21,7 +21,7 @@ int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *co
     if (edge_vars_b) PyTuple_SetItem(py_args, 3, Py_BuildValue("O", ((struct edge_vars *) edge_vars_b)->vars));
     else PyTuple_SetItem(py_args, 3, Py_None);
 
-	PyObject *res = PyObject_CallObject(py_callback, py_args);
+    PyObject *res = PyObject_CallObject(py_callback, py_args);
     Py_INCREF(py_callback);
     Py_DECREF(py_args);
     if (!result) 
@@ -36,8 +36,8 @@ int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *co
 void vertex_f(struct graph *graph, struct vertex_result *args, void *glbl, void *edge_vars) {
     struct glbl_args *g = (struct glbl_args *) glbl;
     struct edge_vars *ev = (struct edge_vars *) edge_vars;
-	PyObject *py_callback = g->py_callback;
-	void *glbl_ = g->glbl;
+    PyObject *py_callback = g->py_callback;
+    void *glbl_ = g->glbl;
 
     PyObject *py_graph = SWIG_NewPointerObj(SWIG_as_voidptr(graph), SWIGTYPE_p_graph, 1);
     
@@ -50,7 +50,6 @@ void vertex_f(struct graph *graph, struct vertex_result *args, void *glbl, void 
     if (edge_vars) PyTuple_SetItem(py_args, 4, Py_BuildValue("O", ev->vars));
     else PyTuple_SetItem(py_args, 4, Py_None);
 
-    fprintf(stderr, "%p\n", args->vertex_argv);
     void *res = PyObject_CallFunction(py_callback, "O", py_args);
     Py_INCREF(py_callback);
 
@@ -69,11 +68,11 @@ void vertex_f(struct graph *graph, struct vertex_result *args, void *glbl, void 
 }
 
 void generic_f(void *glbl) {
-	struct glbl_args *g = (struct glbl_args*) glbl;
-	PyObject *py_callback = g->py_callback;
-	void *glbl_ = g->glbl;
+    struct glbl_args *g = (struct glbl_args*) glbl;
+    PyObject *py_callback = g->py_callback;
+    void *glbl_ = g->glbl;
 
-	void *res = PyObject_CallObject(py_callback, Py_BuildValue("O", glbl_));
+    void *res = PyObject_CallObject(py_callback, Py_BuildValue("O", glbl_));
     Py_INCREF(py_callback);
 
     if (!res)

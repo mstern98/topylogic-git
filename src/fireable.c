@@ -23,14 +23,14 @@ struct fireable *create_fireable(struct graph* graph, struct vertex* vertex, str
    
     PyObject *copy_obj = graph->copy_obj; 
 
+    PyGILState_STATE state = PyGILState_Ensure();
     PyObject *vertex_argv = PyObject_CallFunction(copy_obj, "(O)", args->vertex_argv);
     fireable->args->vertex_argv = vertex_argv;
-    Py_DECREF(args->vertex_argv);
-    Py_DECREF(vertex_argv);
     PyObject *edge_argv = PyObject_CallFunction(copy_obj, "(O)", args->edge_argv);
     fireable->args->edge_argv = edge_argv;
-    Py_DECREF(args->edge_argv);
-    Py_DECREF(edge_argv);
+    PyGILState_Release(state);
+
+    Py_INCREF(graph->copy_obj);
 
     topologic_debug("%s;%s;%p", "create_fireable", "success", fireable);
     return fireable;
