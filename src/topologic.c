@@ -356,8 +356,7 @@ int run(struct graph *graph, struct vertex_result **init_vertex_args)
 int fire(struct graph *graph, struct vertex *vertex, struct vertex_result *args, enum STATES color, int iloop)
 {
     topologic_debug("%s;graph %p;vertex %p;args %p;color %d;iloop %d", "fire", graph, vertex, args, color, iloop);
-    PyGILState_STATE state = PyGILState_Ensure();
-
+    
     int retval = 0;
     struct vertex *next_vertex = NULL;
 
@@ -404,9 +403,14 @@ int fire(struct graph *graph, struct vertex *vertex, struct vertex_result *args,
         goto exit_fire;
     }
 
+    PyGILState_STATE state = PyGILState_Ensure();
+
     (vertex->f)(graph, args, vertex->glbl, vertex->shared->vertex_data);
     if (graph->max_state_changes != -1 && graph->state_count + 1 >= graph->max_state_changes)
+    {
+	PyGILState_Release(state);
         goto exit_fire;
+    }
 
     struct stack *edges = init_stack();
     preorder(vertex->edge_tree, edges);
@@ -459,6 +463,7 @@ int fire(struct graph *graph, struct vertex *vertex, struct vertex_result *args,
     }
     destroy_stack(edges);
     edges = NULL;
+    PyGILState_Release(state);
 
 exit_fire:
     pthread_mutex_lock(&graph->lock);
@@ -495,7 +500,6 @@ exit_fire:
         pthread_mutex_unlock(&graph->lock);
         topologic_debug("%s;%s;%p", "fire", "firing next vertex", next_vertex);
         sleep_ms(PTHREAD_SLEEP_TIME);
-        PyGILState_Release(state);
         return fire(graph, next_vertex, args, flip_color, iloop_b);
     }
 clean_fire:
@@ -504,7 +508,6 @@ clean_fire:
         free(args);
         args = NULL;
     }
-    PyGILState_Release(state);
     topologic_debug("%s;%s;%d", "fire", "finished", retval);
     return retval;
 }
