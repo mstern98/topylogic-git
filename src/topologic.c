@@ -348,7 +348,6 @@ int run(struct graph *graph, struct vertex_result **init_vertex_args)
         }
     }
     Py_END_ALLOW_THREADS
-
     topologic_debug("%s;%s;%d", "run", "finished", 0);
     return 0;
 }
@@ -502,8 +501,6 @@ exit_fire:
                 pthread_mutex_unlock(&graph->lock);
                 edge->b->is_active = 1;
 	    }
-	    Py_XDECREF(args->edge_argv);
-	    Py_XDECREF(args->vertex_argv);
 	    destroy_stack(switch_edges);
 	    switch_edges = NULL;
     }
