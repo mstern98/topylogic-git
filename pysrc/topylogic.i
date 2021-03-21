@@ -239,11 +239,10 @@ void generic_f(void *glbl) {
 %include "../include/request.h"
 %extend edge {
     edge(struct vertex *a, struct vertex *b, PyObject *f, PyObject *glbl = NULL) {
-        if (PyList_Check(glbl) || !PyCallable_Check(f)) return NULL;
+        if ((glbl && PyList_Check(glbl)) || !PyCallable_Check(f)) return NULL;
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = f;
-        if(!PyCallable_Check(f)) return NULL;
         return create_edge(a, b, edge_f, g);
     }
     ~edge() {}
@@ -286,7 +285,7 @@ void generic_f(void *glbl) {
 %include "../include/topylogic.h"
 %extend bi_edge {
     bi_edge(struct vertex *a, struct vertex *b, PyObject *f, PyObject *glbl = NULL) {
-        if (PyList_Check(glbl) || !PyCallable_Check(f)) return NULL;
+        if ((glbl && PyList_Check(glbl)) || !PyCallable_Check(f)) return NULL;
         
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
@@ -372,7 +371,7 @@ void generic_f(void *glbl) {
 
 %extend vertex {
     vertex(struct graph *graph, PyObject *f, int id, PyObject *glbl = NULL) {
-        if (PyList_Check(glbl) || !PyCallable_Check(f)) return NULL;
+        if ((glbl && PyList_Check(glbl)) || !PyCallable_Check(f)) return NULL;
 
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = (void*)glbl;
@@ -427,7 +426,7 @@ void generic_f(void *glbl) {
 }
 
 %extend vertex_result {
-    vertex_result(PyObject *vertex_argv, PyObject *edge_argv) {
+    vertex_result(PyObject *vertex_argv=NULL, PyObject *edge_argv=NULL) {
         if (PyList_Check(vertex_argv) || PyList_Check(edge_argv)) return NULL;
        
         size_t v_s = sizeof(vertex_argv);
@@ -455,19 +454,13 @@ void generic_f(void *glbl) {
     }
     void set_vertex_argv(PyObject *vertex_argv) {
         if (PyList_Check(vertex_argv)) return;
-        if (PyTuple_Check(vertex_argv))
-            $self->vertex_size = PyTuple_Size(vertex_argv);
-        else
-            $self->vertex_size = 1;
+        $self->vertex_size = sizeof(vertex_argv);
         $self->vertex_argv = vertex_argv;
     }
 
     void set_edge_argv(PyObject *edge_argv) {
         if (PyList_Check(edge_argv)) return;
-        if (PyTuple_Check(edge_argv))
-            $self->vertex_size = PyTuple_Size(edge_argv);
-        else
-            $self->edge_size = 1;
+        $self->edge_size = sizeof(edge_argv);
         $self->edge_argv = edge_argv;
     }
 
