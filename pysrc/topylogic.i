@@ -84,6 +84,14 @@ void generic_f(void *glbl) {
 
 %}
 
+%inline %{
+    enum TOPYLOGIC_TYPES {
+        NONE_TYPE=0,
+        VERTEX_TYPE=1,
+        EDGE_TYPE=2
+    };
+%}
+
 %include "../include/stack.h"
 %extend stack{
     stack() {
@@ -94,54 +102,48 @@ void generic_f(void *glbl) {
         destroy_stack($self);
     }
 
-    PyObject *get(PyObject *index) {
+    PyObject *get(PyObject *index, enum TOPYLOGIC_TYPES dtype=NONE_TYPE) {
         if(!PyLong_Check(index))
             return Py_None;
         int i = (int) PyLong_AsLong(index);
         PyObject *ret = get($self, i);
         if (!ret) return Py_None;
+        if (dtype == VERTEX_TYPE)
+             return SWIG_NewPointerObj(SWIG_as_voidptr(ret), SWIGTYPE_p_vertex, 1);
+        else if (dtype == EDGE_TYPE)
+            return SWIG_NewPointerObj(SWIG_as_voidptr(ret), SWIGTYPE_p_edge, 1);
         return ret;
     }
 
-    PyObject *pop() {
+    PyObject *pop(enum TOPYLOGIC_TYPES dtype=NONE_TYPE) {
         PyObject *ret = pop($self);
         if (!ret) return Py_None;
-        return ret;
-    }
-
-    PyObject *get_vertex(PyObject *index) {
-        if(!PyLong_Check(index))
-            return Py_None;
-        int i = (int) PyLong_AsLong(index);
-        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(get($self, i)), SWIGTYPE_p_vertex, 1);
-        if (!ret) return Py_None;
-        return ret;
-    }
-
-    PyObject *pop_vertex() {
-        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(pop($self)), SWIGTYPE_p_vertex, 1);
-        if (!ret) return Py_None;
-        return ret;
-    }
-
-    PyObject *get_edge(PyObject *index) {
-        if(!PyLong_Check(index))
-            return Py_None;
-        int i = (int) PyLong_AsLong(index);
-        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(get($self, i)), SWIGTYPE_p_edge, 1);
-        if (!ret) return Py_None;
-        return ret;
-    }
-
-    PyObject *pop_edge() {
-        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(pop($self)), SWIGTYPE_p_edge, 1);
-        if (!ret) return Py_None;
+        if (dtype == VERTEX_TYPE) 
+            return SWIG_NewPointerObj(SWIG_as_voidptr(ret), SWIGTYPE_p_vertex, 1);
+        else if (dtype == EDGE_TYPE) 
+            return SWIG_NewPointerObj(SWIG_as_voidptr(ret), SWIGTYPE_p_edge, 1);
         return ret;
     }
 
     int push(PyObject *data) {
         if (PyList_Check(data)) return -1;
         return push($self, data);
+    }
+
+    PyObject *to_list(enum TOPYLOGIC_TYPES dtype=NONE_TYPE) {
+        int i = 0, l = $self->length;
+        void *data = NULL;
+        PyObject *list = PyList_New(l);
+        for (i; i < l; ++i) {
+            data = get($self, i);
+            if (dtype == VERTEX_TYPE)
+                PyList_SetItem(list, i, SWIG_NewPointerObj(SWIG_as_voidptr(data), SWIGTYPE_p_vertex, 1));
+            else if(dtype == EDGE_TYPE)
+                PyList_SetItem(list, i, SWIG_NewPointerObj(SWIG_as_voidptr(data), SWIGTYPE_p_edge, 1));
+            else
+                PyList_SetItem(list, i, data);
+        }
+        return list;
     }
 };
 
@@ -163,74 +165,102 @@ void generic_f(void *glbl) {
         return insert($self, data, i);
     }
 
-    PyObject *remove_ID(PyObject * id) {
+    PyObject *remove_ID(PyObject * id, enum TOPYLOGIC_TYPES dtype=NONE_TYPE) {
         if (!PyLong_Check(id))
             return Py_None;
         int i = (int) PyLong_AsLong(id);
         PyObject *ret = remove_ID($self, i);
         if (!ret) return Py_None;
+        if (dtype == VERTEX_TYPE)
+            return SWIG_NewPointerObj(SWIG_as_voidptr(ret), SWIGTYPE_p_vertex, 1);
+        else if (dtype == EDGE_TYPE)
+            return SWIG_NewPointerObj(SWIG_as_voidptr(ret), SWIGTYPE_p_edge, 1);
         return ret;
     }
 
-    PyObject *remove_ID_vertex(PyObject * id) {
-        if (!PyLong_Check(id))
-            return Py_None;
-        int i = (int) PyLong_AsLong(id);
-        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(remove_ID($self, i)), SWIGTYPE_p_vertex, 1);
-        if (!ret) return Py_None;
-        return ret;
-    }
-
-    PyObject *remove_ID_edge(PyObject * id) {
-        if (!PyLong_Check(id))
-            return Py_None;
-        int i = (int) PyLong_AsLong(id);
-        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(remove_ID($self, i)), SWIGTYPE_p_edge, 1);
-        if (!ret) return Py_None;
-        return ret;
-    }
-
-    PyObject *find(PyObject *id) {
+    PyObject *find(PyObject *id, enum TOPYLOGIC_TYPES dtype=NONE_TYPE) {
         if (!PyLong_Check(id))
             return Py_None;
         int i = (int) PyLong_AsLong(id);
         PyObject *ret = find($self, i);
         if (!ret) return Py_None;
+        if (dtype == VERTEX_TYPE) 
+            return SWIG_NewPointerObj(SWIG_as_voidptr(ret), SWIGTYPE_p_vertex, 1);
+        else if (dtype == EDGE_TYPE)
+            return SWIG_NewPointerObj(SWIG_as_voidptr(ret), SWIGTYPE_p_edge, 1);
         return ret;
     }
     
-    PyObject *find_vertex(PyObject *id) {
-        if (!PyLong_Check(id))
-            return Py_None;
-        int i = (int) PyLong_AsLong(id);
-        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(find($self, i)), SWIGTYPE_p_vertex, 1);
-        if (!ret) return Py_None;
-        return ret;
+    PyObject *inorder(enum TOPYLOGIC_TYPES dtype=NONE_TYPE) {
+        void *data;
+        int i = 0, stack_length = 0;
+        PyObject *list;
+        struct stack *stack = init_stack();
+        inorder($self, stack);
+        stack_length = stack->length;
+        list = PyList_New(stack_length);
+        while ((data = pop(stack)) != NULL) {
+            if (dtype == VERTEX_TYPE)
+                PyList_SetItem(list, i, SWIG_NewPointerObj(SWIG_as_voidptr(data), SWIGTYPE_p_vertex, 1));
+            else if(dtype == EDGE_TYPE)
+                PyList_SetItem(list, i, SWIG_NewPointerObj(SWIG_as_voidptr(data), SWIGTYPE_p_edge, 1));
+            else
+                PyList_SetItem(list, i, data);
+            ++i;
+        }
+        destroy_stack(stack);
+        stack = NULL;
+        return list;
     }
 
-    PyObject *find_edge(PyObject *id) {
-        if (!PyLong_Check(id))
-            return Py_None;
-        int i = (int) PyLong_AsLong(id);
-        PyObject *ret = SWIG_NewPointerObj(SWIG_as_voidptr(find($self, i)), SWIGTYPE_p_edge, 1);
-        if (!ret) return Py_None;
-        return ret;
+    PyObject *preorder(enum TOPYLOGIC_TYPES dtype=NONE_TYPE){
+        void *data;
+        int i = 0, stack_length = 0;
+        PyObject *list;
+        struct stack *stack = init_stack();
+        preorder($self, stack);
+        stack_length = stack->length;
+        list = PyList_New(stack_length);
+        while ((data = pop(stack)) != NULL) {
+            if (dtype == VERTEX_TYPE)
+                PyList_SetItem(list, i, SWIG_NewPointerObj(SWIG_as_voidptr(data), SWIGTYPE_p_vertex, 1));
+            else if(dtype == EDGE_TYPE)
+                PyList_SetItem(list, i, SWIG_NewPointerObj(SWIG_as_voidptr(data), SWIGTYPE_p_edge, 1));
+            else
+                PyList_SetItem(list, i, data);
+            ++i;
+        }
+        destroy_stack(stack);
+        stack = NULL;
+        return list;
     }
 
-    void inorder(struct stack *stack) {
-        return inorder($self, stack);
+    PyObject *postorder(enum TOPYLOGIC_TYPES dtype=NONE_TYPE){
+        void *data;
+        int i = 0, stack_length = 0;
+        PyObject *list;
+        struct stack *stack = init_stack();
+        postorder($self, stack);
+        stack_length = stack->length;
+        list = PyList_New(stack_length);
+        while ((data = pop(stack)) != NULL) {
+            if (dtype == VERTEX_TYPE)
+                PyList_SetItem(list, i, SWIG_NewPointerObj(SWIG_as_voidptr(data), SWIGTYPE_p_vertex, 1));
+            else if(dtype == EDGE_TYPE)
+                PyList_SetItem(list, i, SWIG_NewPointerObj(SWIG_as_voidptr(data), SWIGTYPE_p_edge, 1));
+            else
+                PyList_SetItem(list, i, data);
+            ++i;
+        }
+        destroy_stack(stack);
+        stack = NULL;
+        return list;
     }
 
-    void preorder(struct stack *stack){
-        return preorder($self, stack);
-    }
-
-    void postorder(struct stack *stack){
-        return postorder($self, stack);
-    }
-
-    void stackify(struct stack *stack) {
-        return stackify($self, stack);
+    PyObject *stackify() {
+        struct stack *stack = init_stack();
+        stackify($self, stack);
+        return SWIG_NewPointerObj(SWIG_as_voidptr(stack), SWIGTYPE_p_stack, 1);
     }
 };
 
@@ -559,6 +589,8 @@ void generic_f(void *glbl) {
     int process_requests() {
         return process_requests($self);
     }
+
+
 };
 
 %extend vertex_request {

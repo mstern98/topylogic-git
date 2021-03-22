@@ -26,13 +26,13 @@ s.destroy()
 '''
 
 def v_alt(i, a, b, c, d, e):
-    m = mod_vertex_request(a.vertices.find_vertex(1), v_fun, (2,3))
+    m = mod_vertex_request(a.vertices.find(1, dtype=topylogic.VERTEX_TYPE), v_fun, (2,3))
     g.submit_request(topylogic.MOD_VERTEX, m)
     print("v_alt ", b, " ", c, " g_ ", a.state_count, " ", a.max_state_changes, " ", a.max_loop)
     return b, c + 1, d, e
 
 def v_fun(i, a, b1, b2, c, d):
-    m = mod_vertex_request(a.vertices.find_vertex(1), v_alt, (2,3))
+    m = mod_vertex_request(a.vertices.find(1, dtype=topylogic.VERTEX_TYPE), v_alt, (2,3))
     g.submit_request(topylogic.MOD_VERTEX, m)
     print("v_fund ", a, b1, b2, c, d)
     return b1, b2 + 1, c, d
@@ -52,7 +52,8 @@ vr1 = vertex_result("A", 0)
 vr2 = vertex_result("B", 0)
 vr3 = vertex_result("C", 10)
 g.set_starting_ids([0, 1, 2])
-g.run([vr1, vr2, vr3])
-g.destroy()
+
+#g.run([vr1, vr2, vr3])
+#g.destroy()
 
 
