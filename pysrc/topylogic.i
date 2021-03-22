@@ -82,6 +82,24 @@ void generic_f(void *glbl) {
     Py_DECREF(res);
 }
 
+PyObject *parse_list(PyObject *arg) {
+    int i = 0;
+    Py_ssize_t len = PyList_Size(arg);
+    PyObject *res = PyList_New(len);
+    for (i; i < len; ++i) {
+        PyObject *data = PyList_GetItem(arg, i);
+        if (PyByteArray_Check(data)) 
+            PyList_SetItem(res, i, PyByteArray_FromStringAndSize(PyByteArray_AsString(data), PyByteArray_Size(data)));
+        else if (PyLong_Check(data))
+            PyList_SetItem(res, i, PyLong_FromLong(PyLong_AsLong(data)+1));
+        else if (PyList_Check(data)) 
+            PyList_SetItem(res, i, parse_list(data));
+        else
+            PyList_SetItem(res, i, Py_BuildValue("O", data));
+    }
+    return res;
+}
+
 %}
 
 %inline %{
@@ -126,7 +144,8 @@ void generic_f(void *glbl) {
     }
 
     int push(PyObject *data) {
-        if (PyList_Check(data)) return -1;
+        if (PyList_Check(data)) 
+            push($self, parse_list(data));
         return push($self, data);
     }
 
@@ -159,9 +178,9 @@ void generic_f(void *glbl) {
     int insert(PyObject *data, PyObject *id) {
         if (!PyLong_Check(id))
             return -1;
-        if (PyList_Check(data)) return -1;
-
         int i = (int) PyLong_AsLong(id);
+        if (PyList_Check(data)) 
+            insert($self, parse_list(data), i);
         return insert($self, data, i);
     }
 
@@ -271,7 +290,9 @@ void generic_f(void *glbl) {
 %include "../include/request.h"
 %extend edge {
     edge(struct vertex *a, struct vertex *b, PyObject *f, PyObject *glbl = NULL) {
-        if ((glbl && PyList_Check(glbl)) || !PyCallable_Check(f)) return NULL;
+        if (!PyCallable_Check(f)) return NULL;
+        if (glbl && PyList_Check(glbl))
+            glbl = parse_list(glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = f;
@@ -283,7 +304,9 @@ void generic_f(void *glbl) {
     }
 
     int modify_edge(PyObject *f = NULL, PyObject *glbl = NULL) {
-        if ((glbl && PyList_Check(glbl)) || (f && !PyCallable_Check(f))) return -1;
+        if (f && !PyCallable_Check(f)) return -1;
+        if (glbl && PyList_Check(glbl))
+            glbl = parse_list(glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         if (f) { 
             g->py_callback = f;
@@ -305,7 +328,8 @@ void generic_f(void *glbl) {
         return modify_edge($self->a, $self->b, edge_f, g);
     }
     int set_glbl(PyObject *glbl = NULL) {
-        if (PyList_Check(glbl)) return -1;
+        if (glbl && PyList_Check(glbl)) 
+            glbl = parse_list(glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = ((struct glbl_args *) $self->glbl)->py_callback;
@@ -317,7 +341,9 @@ void generic_f(void *glbl) {
 %include "../include/topylogic.h"
 %extend bi_edge {
     bi_edge(struct vertex *a, struct vertex *b, PyObject *f, PyObject *glbl = NULL) {
-        if ((glbl && PyList_Check(glbl)) || !PyCallable_Check(f)) return NULL;
+        if (!PyCallable_Check(f)) return NULL;
+        if (glbl && PyList_Check(glbl))
+            glbl = parse_list(glbl);
         
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
@@ -369,7 +395,9 @@ void generic_f(void *glbl) {
     }
 
     int modify_bi_edge(PyObject *f = NULL, PyObject *glbl = NULL) {
-        if ((glbl && PyList_Check(glbl)) || (f != NULL && !PyCallable_Check(f))) return -1;
+        if (f != NULL && !PyCallable_Check(f)) return -1;
+        if (glbl && PyList_Check(glbl))
+            glbl = parse_list(glbl);
         
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         if (f) {
@@ -392,7 +420,8 @@ void generic_f(void *glbl) {
         return modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b, edge_f, g);
     }
     int set_glbl(PyObject *glbl = NULL) {
-        if (PyList_Check(glbl)) return -1;
+        if (glbl && PyList_Check(glbl)) 
+            glbl = parse_list(glbl);
 
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
@@ -403,7 +432,9 @@ void generic_f(void *glbl) {
 
 %extend vertex {
     vertex(struct graph *graph, PyObject *f, int id, PyObject *glbl = NULL) {
-        if ((glbl && PyList_Check(glbl)) || !PyCallable_Check(f)) return NULL;
+        if (!PyCallable_Check(f)) return NULL;
+        if (glbl && PyList_Check(glbl))
+            glbl = parse_list(glbl);
 
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = (void*)glbl;
@@ -429,7 +460,9 @@ void generic_f(void *glbl) {
         remove_vertex(g, $self);
     }
     int modify_vertex(PyObject *f, PyObject *glbl) {
-        if (PyList_Check(glbl) || !PyCallable_Check(f)) return -1;
+        if (!PyCallable_Check(f)) return -1;
+        if (PyList_Check(glbl))
+            glbl = parse_list(glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = f;
@@ -443,14 +476,16 @@ void generic_f(void *glbl) {
         return modify_vertex($self, vertex_f, g);
     }
     int modify_glbl(PyObject *glbl) {
-        if (PyList_Check(glbl)) return -1;
+        if (PyList_Check(glbl)) 
+            glbl = parse_list(glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = ((struct glbl_args *) $self->glbl)->py_callback;
         return modify_vertex($self, vertex_f, g);
     }
     int modify_shared_edge_vars(PyObject *edge_vars) {
-        if (PyList_Check(edge_vars)) return -1;
+        if (PyList_Check(edge_vars)) 
+            edge_vars = parse_list(edge_vars);
         struct edge_vars *vars = (struct edge_vars *) malloc(sizeof(struct edge_vars));
         vars->vars = edge_vars;
         return modify_shared_edge_vars($self, vars);
@@ -459,7 +494,10 @@ void generic_f(void *glbl) {
 
 %extend vertex_result {
     vertex_result(PyObject *vertex_argv=NULL, PyObject *edge_argv=NULL) {
-        if (PyList_Check(vertex_argv) || PyList_Check(edge_argv)) return NULL;
+        if (PyList_Check(vertex_argv))
+           vertex_argv = parse_list(vertex_argv); 
+        if (PyList_Check(edge_argv)) 
+            edge_argv = parse_list(edge_argv);
        
         size_t v_s = sizeof(vertex_argv);
         size_t e_s = sizeof(edge_argv);
@@ -485,13 +523,15 @@ void generic_f(void *glbl) {
         $self = NULL;
     }
     void set_vertex_argv(PyObject *vertex_argv) {
-        if (PyList_Check(vertex_argv)) return;
+        if (PyList_Check(vertex_argv)) 
+            vertex_argv = parse_list(vertex_argv);
         $self->vertex_size = sizeof(vertex_argv);
         $self->vertex_argv = vertex_argv;
     }
 
     void set_edge_argv(PyObject *edge_argv) {
-        if (PyList_Check(edge_argv)) return;
+        if (PyList_Check(edge_argv)) 
+            edge_argv = parse_list(edge_argv);
         $self->edge_size = sizeof(edge_argv);
         $self->edge_argv = edge_argv;
     }
@@ -595,7 +635,9 @@ void generic_f(void *glbl) {
 
 %extend vertex_request {
     vertex_request(struct graph *graph, int id, PyObject *f=NULL, PyObject *glbl=NULL) {
-        if ((glbl && PyList_Check(glbl)) || (f && !PyCallable_Check(f))) return NULL;
+        if (f && !PyCallable_Check(f)) return NULL;
+        if (glbl && PyList_Check(glbl))
+            glbl = parse_list(glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = f;
@@ -622,7 +664,9 @@ void generic_f(void *glbl) {
 
 %extend mod_vertex_request {
     mod_vertex_request(struct vertex *vertex, PyObject *f=NULL, PyObject *glbl=NULL) {
-        if ((glbl && PyList_Check(glbl)) || (f && !PyCallable_Check(f))) return NULL;
+        if (f && !PyCallable_Check(f)) return NULL;
+        if (glbl && PyList_Check(glbl))
+            glbl = parse_list(glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = f;
@@ -647,7 +691,8 @@ void generic_f(void *glbl) {
 
 %extend mod_edge_vars_request {
     mod_edge_vars_request(struct vertex *vertex, PyObject *edge_vars=NULL) {
-        if (PyList_Check(edge_vars)) return NULL;
+        if (PyList_Check(edge_vars)) 
+            edge_vars = parse_list(edge_vars);
         struct mod_edge_vars_request *v = (struct mod_edge_vars_request *) malloc(sizeof(struct mod_edge_vars_request));
         struct edge_vars *vars = (struct edge_vars *) malloc(sizeof(struct edge_vars));
         vars->vars = edge_vars;
@@ -696,7 +741,9 @@ void generic_f(void *glbl) {
 
 %extend edge_request {
     edge_request(struct vertex *a, struct vertex *b, PyObject *f=NULL, PyObject *glbl=NULL) {
-        if ((glbl && PyList_Check(glbl)) || (f && !PyCallable_Check(f))) return NULL;
+        if (f && !PyCallable_Check(f)) return NULL;
+        if (glbl && PyList_Check(glbl))
+            glbl = parse_list(glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = f;
