@@ -53,8 +53,8 @@ vr2 = vertex_result("B", 0)
 vr3 = vertex_result("C", 10)
 g.set_starting_ids([0, 1, 2])
 
-#g.run([vr1, vr2, vr3])
-#g.destroy()
+g.run([vr1, vr2, vr3])
+g.destroy()
 
-print(g.vertices)
+#print(g.vertices)
 
