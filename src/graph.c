@@ -4,7 +4,7 @@
 #include "../include/topylogic.h"
 #include "../include/topologic.h"
 
-struct graph *graph_init(int max_state_changes, int snapshot_timestamp, int max_loop, unsigned int lvl_verbose, enum CONTEXT context, enum MEM_OPTION mem_option)
+struct graph *graph_init(int max_state_changes, int snapshot_timestamp, int max_loop, unsigned int lvl_verbose, enum CONTEXT context, enum MEM_OPTION mem_option, enum REQUEST_FLAG request_flag)
 {
 	topologic_debug("%s;max_state_chages %d;snapshot_timestamp %d;max_loop %d;lvl_verbose %d;context %d;mem_option %d", "graph_init", max_state_changes, snapshot_timestamp, max_loop, lvl_verbose, context, mem_option);
 	struct graph *graph = (struct graph *)malloc(sizeof(struct graph));
@@ -16,6 +16,7 @@ struct graph *graph_init(int max_state_changes, int snapshot_timestamp, int max_
 	graph->max_state_changes = max_state_changes;
 	graph->max_loop = max_loop;
 	graph->snapshot_timestamp = snapshot_timestamp;
+    graph->request_flag = request_flag;
 	graph->lvl_verbose = lvl_verbose;
 	graph->context = context;
 	graph->state_count = 0;

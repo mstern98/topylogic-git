@@ -6,20 +6,21 @@
 #include "../include/topylogic.h"
 #include "../include/topologic.h"
 
-int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *const edge_vars_b) {
+int edge_f(int id, void *args, void *glbl, const void *const edge_vars_a, const void *const edge_vars_b) {
     int result = 0;
 
     struct glbl_args *g = (struct glbl_args *) glbl;
     PyObject *py_callback = g->py_callback;
     void *glbl_ = g->glbl;
     
-    PyObject *py_args = PyTuple_New(4);
-    PyTuple_SetItem(py_args, 0, Py_BuildValue("O", args));
-    PyTuple_SetItem(py_args, 1, Py_BuildValue("O", glbl_));
-    if (edge_vars_a) PyTuple_SetItem(py_args, 2, Py_BuildValue("O", ((struct edge_vars *) edge_vars_a)->vars));
-    else PyTuple_SetItem(py_args, 2, Py_None);
-    if (edge_vars_b) PyTuple_SetItem(py_args, 3, Py_BuildValue("O", ((struct edge_vars *) edge_vars_b)->vars));
+    PyObject *py_args = PyTuple_New(5);
+    PyTuple_SetItem(py_args, 0, Py_BuildValue("i", id));
+    PyTuple_SetItem(py_args, 1, Py_BuildValue("O", args));
+    PyTuple_SetItem(py_args, 2, Py_BuildValue("O", glbl_));
+    if (edge_vars_a) PyTuple_SetItem(py_args, 3, Py_BuildValue("O", ((struct edge_vars *) edge_vars_a)->vars));
     else PyTuple_SetItem(py_args, 3, Py_None);
+    if (edge_vars_b) PyTuple_SetItem(py_args, 4, Py_BuildValue("O", ((struct edge_vars *) edge_vars_b)->vars));
+    else PyTuple_SetItem(py_args, 4, Py_None);
 
     PyObject *res = PyObject_CallObject(py_callback, py_args);
     Py_INCREF(py_callback);
@@ -33,7 +34,7 @@ int edge_f(void *args, void *glbl, const void *const edge_vars_a, const void *co
     return result;
 }
 
-void vertex_f(struct graph *graph, struct vertex_result *args, void *glbl, void *edge_vars) {
+void vertex_f(int id, struct graph *graph, struct vertex_result *args, void *glbl, void *edge_vars) {
     struct glbl_args *g = (struct glbl_args *) glbl;
     struct edge_vars *ev = (struct edge_vars *) edge_vars;
     PyObject *py_callback = g->py_callback;
@@ -41,14 +42,15 @@ void vertex_f(struct graph *graph, struct vertex_result *args, void *glbl, void 
 
     PyObject *py_graph = SWIG_NewPointerObj(SWIG_as_voidptr(graph), SWIGTYPE_p_graph, 1);
     
-    PyObject *py_args = PyTuple_New(5);
-    PyTuple_SetItem(py_args, 0, py_graph);
-    PyTuple_SetItem(py_args, 1, Py_BuildValue("O", args->vertex_argv));
-    PyTuple_SetItem(py_args, 2, Py_BuildValue("O", args->edge_argv));
-    if (glbl) PyTuple_SetItem(py_args, 3, Py_BuildValue("O", glbl_));
-    else PyTuple_SetItem(py_args, 3, Py_None);
-    if (edge_vars) PyTuple_SetItem(py_args, 4, Py_BuildValue("O", ev->vars));
+    PyObject *py_args = PyTuple_New(6);
+    PyTuple_SetItem(py_args, 0, Py_BuildValue("i", id));
+    PyTuple_SetItem(py_args, 1, py_graph);
+    PyTuple_SetItem(py_args, 2, Py_BuildValue("O", args->vertex_argv));
+    PyTuple_SetItem(py_args, 3, Py_BuildValue("O", args->edge_argv));
+    if (glbl) PyTuple_SetItem(py_args, 4, Py_BuildValue("O", glbl_));
     else PyTuple_SetItem(py_args, 4, Py_None);
+    if (edge_vars) PyTuple_SetItem(py_args, 5, Py_BuildValue("O", ev->vars));
+    else PyTuple_SetItem(py_args, 5, Py_None);
 
     void *res = PyObject_CallFunction(py_callback, "O", py_args);
     Py_INCREF(py_callback);
@@ -479,8 +481,9 @@ void generic_f(void *glbl) {
         unsigned int max_loop = MAX_LOOPS,
         enum VERBOSITY lvl_verbose = VERTICES | EDGES | FUNCTIONS | GLOBALS,
         enum CONTEXT context = SINGLE,
-        enum MEM_OPTION mem_option = CONTINUE) {
-            return graph_init(max_state_changes, snapshot_timestamp, max_loop, lvl_verbose, context, mem_option);
+        enum MEM_OPTION mem_option = CONTINUE,
+        enum REQUEST_FLAG request_flag = IGNORE_FAIL_REQUEST) {
+            return graph_init(max_state_changes, snapshot_timestamp, max_loop, lvl_verbose, context, mem_option, request_flag);
         }
     
     ~graph() {}
