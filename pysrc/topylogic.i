@@ -86,30 +86,6 @@ void generic_f(void *glbl) {
     Py_DECREF(res);
 }
 
-PyObject *parse_data(PyObject *data) {
-    if (PyByteArray_Check(data))
-        return PyByteArray_FromStringAndSize(PyByteArray_AsString(data), PyByteArray_Size(data));
-    else if (PyBool_Check(data) || PyComplex_Check(data) || PyFloat_Check(data))
-        return data;
-    else if (PyLong_Check(data))
-        return PyLong_FromLong(PyLong_AsLong(data)+1);
-    else if (PyList_Check(data))
-        return parse_list(data);
-    else
-        return Py_BuildValue("O", data);
-}
-
-PyObject *parse_list(PyObject *arg) {
-    int i = 0;
-    Py_ssize_t len = PyList_Size(arg);
-    PyObject *res = PyList_New(len);
-    for (i; i < len; ++i) {
-        PyObject *data = PyList_GetItem(arg, i);
-        PyList_SetItem(res, i, parse_data(data));
-    }
-    return res;
-}
-
 %}
 
 %inline %{
@@ -155,7 +131,7 @@ PyObject *parse_list(PyObject *arg) {
 
     int push(PyObject *data) {
         if (PyList_Check(data) || PyMapping_Check(data)) 
-            push($self, parse_list(data));
+            push($self, Py_BuildValue("O", data));
         return push($self, data);
     }
 
@@ -190,7 +166,7 @@ PyObject *parse_list(PyObject *arg) {
             return -1;
         int i = (int) PyLong_AsLong(id);
         if (PyList_Check(data) || PyMapping_Check(data)) 
-            insert($self, parse_data(data), i);
+            insert($self, Py_BuildValue("O", data), i);
         return insert($self, data, i);
     }
 
@@ -302,7 +278,7 @@ PyObject *parse_list(PyObject *arg) {
     edge(struct vertex *a, struct vertex *b, PyObject *f, PyObject *glbl = NULL) {
         if (!PyCallable_Check(f)) return NULL;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
-            glbl = parse_data(glbl);
+            glbl = Py_BuildValue("O", glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = f;
@@ -316,7 +292,7 @@ PyObject *parse_list(PyObject *arg) {
     int modify_edge(PyObject *f = NULL, PyObject *glbl = NULL) {
         if (f && !PyCallable_Check(f)) return -1;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
-            glbl = parse_data(glbl);
+            glbl = Py_BuildValue("O", glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         if (f) { 
             g->py_callback = f;
@@ -339,7 +315,7 @@ PyObject *parse_list(PyObject *arg) {
     }
     int set_glbl(PyObject *glbl = NULL) {
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl))) 
-            glbl = parse_data(glbl);
+            glbl = Py_BuildValue("O", glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = ((struct glbl_args *) $self->glbl)->py_callback;
@@ -353,7 +329,7 @@ PyObject *parse_list(PyObject *arg) {
     bi_edge(struct vertex *a, struct vertex *b, PyObject *f, PyObject *glbl = NULL) {
         if (!PyCallable_Check(f)) return NULL;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
-            glbl = parse_data(glbl);
+            glbl = Py_BuildValue("O", glbl);
         
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
@@ -407,7 +383,7 @@ PyObject *parse_list(PyObject *arg) {
     int modify_bi_edge(PyObject *f = NULL, PyObject *glbl = NULL) {
         if (f != NULL && !PyCallable_Check(f)) return -1;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
-            glbl = parse_data(glbl);
+            glbl = Py_BuildValue("O", glbl);
         
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         if (f) {
@@ -431,7 +407,7 @@ PyObject *parse_list(PyObject *arg) {
     }
     int set_glbl(PyObject *glbl = NULL) {
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl))) 
-            glbl = parse_data(glbl);
+            glbl = Py_BuildValue("O", glbl);
 
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
@@ -444,7 +420,7 @@ PyObject *parse_list(PyObject *arg) {
     vertex(struct graph *graph, PyObject *f, int id, PyObject *glbl = NULL) {
         if (!PyCallable_Check(f)) return NULL;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
-            glbl = parse_data(glbl);
+            glbl = Py_BuildValue("O", glbl);
 
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = (void*)glbl;
@@ -472,7 +448,7 @@ PyObject *parse_list(PyObject *arg) {
     int modify_vertex(PyObject *f, PyObject *glbl) {
         if (!PyCallable_Check(f)) return -1;
         if (PyList_Check(glbl) || PyMapping_Check(glbl))
-            glbl = parse_data(glbl);
+            glbl = Py_BuildValue("O", glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = f;
@@ -487,7 +463,7 @@ PyObject *parse_list(PyObject *arg) {
     }
     int modify_glbl(PyObject *glbl) {
         if (PyList_Check(glbl) || PyMapping_Check(glbl)) 
-            glbl = parse_data(glbl);
+            glbl = Py_BuildValue("O", glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = ((struct glbl_args *) $self->glbl)->py_callback;
@@ -495,7 +471,7 @@ PyObject *parse_list(PyObject *arg) {
     }
     int modify_shared_edge_vars(PyObject *edge_vars) {
         if (PyList_Check(edge_vars) || PyMapping_Check(edge_vars)) 
-            edge_vars = parse_data(edge_vars);
+            edge_vars = Py_BuildValue("O", edge_vars);
         struct edge_vars *vars = (struct edge_vars *) malloc(sizeof(struct edge_vars));
         vars->vars = edge_vars;
         return modify_shared_edge_vars($self, vars);
@@ -505,9 +481,9 @@ PyObject *parse_list(PyObject *arg) {
 %extend vertex_result {
     vertex_result(PyObject *vertex_argv=NULL, PyObject *edge_argv=NULL) {
         if (PyList_Check(vertex_argv) || PyMapping_Check(vertex_argv))
-           vertex_argv = parse_data(vertex_argv); 
+           vertex_argv = Py_BuildValue("O", vertex_argv); 
         if (PyList_Check(edge_argv) || PyMapping_Check(edge_argv)) 
-            edge_argv = parse_data(edge_argv);
+            edge_argv = Py_BuildValue("O", edge_argv);
        
         size_t v_s = sizeof(vertex_argv);
         size_t e_s = sizeof(edge_argv);
@@ -534,14 +510,14 @@ PyObject *parse_list(PyObject *arg) {
     }
     void set_vertex_argv(PyObject *vertex_argv) {
         if (PyList_Check(vertex_argv) || PyList_Check(vertex_argv)) 
-            vertex_argv = parse_data(vertex_argv);
+            vertex_argv = Py_BuildValue("O", vertex_argv);
         $self->vertex_size = sizeof(vertex_argv);
         $self->vertex_argv = vertex_argv;
     }
 
     void set_edge_argv(PyObject *edge_argv) {
         if (PyList_Check(edge_argv) || PyMapping_Check(edge_argv)) 
-            edge_argv = parse_data(edge_argv);
+            edge_argv = Py_BuildValue("O", edge_argv);
         $self->edge_size = sizeof(edge_argv);
         $self->edge_argv = edge_argv;
     }
@@ -647,7 +623,7 @@ PyObject *parse_list(PyObject *arg) {
     vertex_request(struct graph *graph, int id, PyObject *f=NULL, PyObject *glbl=NULL) {
         if (f && !PyCallable_Check(f)) return NULL;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
-            glbl = parse_data(glbl);
+            glbl = Py_BuildValue("O", glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = f;
@@ -676,7 +652,7 @@ PyObject *parse_list(PyObject *arg) {
     mod_vertex_request(struct vertex *vertex, PyObject *f=NULL, PyObject *glbl=NULL) {
         if (f && !PyCallable_Check(f)) return NULL;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
-            glbl = parse_data(glbl);
+            glbl = Py_BuildValue("O", glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = f;
@@ -702,7 +678,7 @@ PyObject *parse_list(PyObject *arg) {
 %extend mod_edge_vars_request {
     mod_edge_vars_request(struct vertex *vertex, PyObject *edge_vars=NULL) {
         if (PyList_Check(edge_vars) || PyMapping_Check(edge_vars)) 
-            edge_vars = parse_data(edge_vars);
+            edge_vars = Py_BuildValue("O", edge_vars);
         struct mod_edge_vars_request *v = (struct mod_edge_vars_request *) malloc(sizeof(struct mod_edge_vars_request));
         struct edge_vars *vars = (struct edge_vars *) malloc(sizeof(struct edge_vars));
         vars->vars = edge_vars;
@@ -753,7 +729,7 @@ PyObject *parse_list(PyObject *arg) {
     edge_request(struct vertex *a, struct vertex *b, PyObject *f=NULL, PyObject *glbl=NULL) {
         if (f && !PyCallable_Check(f)) return NULL;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
-            glbl = parse_data(glbl);
+            glbl = (glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = f;
