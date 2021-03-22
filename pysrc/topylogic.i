@@ -8,7 +8,7 @@
 
 int edge_f(int id, void *args, void *glbl, const void *const edge_vars_a, const void *const edge_vars_b) {
     int result = 0;
-
+    PyObject *py_res = NULL;
     struct glbl_args *g = (struct glbl_args *) glbl;
     PyObject *py_callback = g->py_callback;
     void *glbl_ = g->glbl;
@@ -28,7 +28,11 @@ int edge_f(int id, void *args, void *glbl, const void *const edge_vars_a, const 
     if (!result) 
         PyErr_Print();
 
-    result = (int) PyLong_AsLong(PyTuple_GetItem(res, 0));
+    py_res = PyTuple_GetItem(res, 0);
+    if (PyLong_Check(py_res))
+        result = (int) PyLong_AsLong(py_res);
+    else if (PyBool_Check(py_res)) 
+        if (py_res == Py_True) result = 1;
     g->glbl = PyTuple_GetItem(res, 1);
 
     return result;

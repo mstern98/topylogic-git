@@ -34,14 +34,13 @@ def v_alt(i, a, b, c, d, e):
 def v_fun(i, a, b1, b2, c, d):
     m = mod_vertex_request(a.vertices.find(1, dtype=topylogic.VERTEX_TYPE), v_alt, (2,3))
     g.submit_request(topylogic.MOD_VERTEX, m)
-    c[0] += 1
     print("v_fund ", a, b1, b2, c, d)
     return b1, b2 + 1, c, d
 
 def e_fun(i, a, b, c, d):
-    return 1, (1,2)
+    return True, (1,2)
 
-g = graph(max_state_changes=8, max_loop=5, context=topylogic.NONE)
+g = graph(max_state_changes=8, max_loop=5, context=topylogic.SWITCH)
 v1 = vertex(g, v_fun, 0, [0, 1])
 v2 = vertex(g, v_fun, 1, [0,2])
 v3 = vertex(g, v_alt, 2, [1, 2])
