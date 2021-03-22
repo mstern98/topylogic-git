@@ -46,6 +46,7 @@ g = graph(max_state_changes=8, max_loop=5, context=topylogic.SWITCH)
 v1 = vertex(g, v_fun, 0, [1, {1:2, "s":[1, 2]}])
 v2 = vertex(g, v_fun, 1, [2, {1:2, "s":[1, 2]}])
 v3 = vertex(g, v_alt, 2, [1, 2])
+
 e1 = edge(v1, v2, e_fun, (0, 0))
 e2 = edge(v2, v1, e_fun, (0, 2))
 e3 = edge(v3, v1, e_fun, (2, 2))

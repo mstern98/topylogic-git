@@ -113,7 +113,7 @@ void generic_f(void *glbl) {
         PyObject *ret = get($self, i);
         if (!ret) return Py_None;
         if (dtype == VERTEX_TYPE)
-             return SWIG_NewPointerObj(SWIG_as_voidptr(ret), SWIGTYPE_p_vertex, 1);
+            return SWIG_NewPointerObj(SWIG_as_voidptr(ret), SWIGTYPE_p_vertex, 1);
         else if (dtype == EDGE_TYPE)
             return SWIG_NewPointerObj(SWIG_as_voidptr(ret), SWIGTYPE_p_edge, 1);
         return ret;
@@ -131,7 +131,7 @@ void generic_f(void *glbl) {
 
     int push(PyObject *data) {
         if (PyList_Check(data) || PyMapping_Check(data)) 
-            push($self, Py_BuildValue("O", data));
+            return push($self, Py_BuildValue("O", data));
         return push($self, data);
     }
 
@@ -166,7 +166,7 @@ void generic_f(void *glbl) {
             return -1;
         int i = (int) PyLong_AsLong(id);
         if (PyList_Check(data) || PyMapping_Check(data)) 
-            insert($self, Py_BuildValue("O", data), i);
+            return insert($self, Py_BuildValue("O", data), i);
         return insert($self, data, i);
     }
 
