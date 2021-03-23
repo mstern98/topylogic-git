@@ -221,7 +221,7 @@ int run(struct graph *graph, struct vertex_result **init_vertex_args)
                         topologic_debug("%s;%s", "run", "Max Thread Attempts Hit");
                         break;
                     }
-                    sleep(THREAD_ATTEMPT_SLEEP);
+                    sleep_ms(THREAD_ATTEMPT_SLEEP);
                     errno = 0;
                     goto create_start_threads;
                 case ABORT:
@@ -583,7 +583,7 @@ create_switch_threads:
                     destroy_fireable(argv);
                     return -1;
                 }
-                sleep(THREAD_ATTEMPT_SLEEP);
+                sleep_ms(THREAD_ATTEMPT_SLEEP);
                 errno = 0;
                 goto create_switch_threads;
             case ABORT:

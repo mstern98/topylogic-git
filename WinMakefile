@@ -8,20 +8,20 @@ SRC=$(wildcard src/*.c)
 INCLUDES= $(wildcard include/*.h)
 OBJ=$(SRC:.c=.o)
 
-LDFLAGS= -lm -lpthread -L. -ltopologic -pthread 
-CFLAGS=  -Wall -Werror -g -fPIC -O2 `pkg-config --cflags python3` #-DDEBUG
-PYFLAGS= `pkg-config --cflags python3`
+LDFLAGS= -lpython39 
+CFLAGS=  -Wall -Werror -g -fPIC -O2 -D_WIN32_WINNT=0x0600 -I/usr/x86_64-w64-mingw32/include/python39 -L/usr/x86_64-w64-mingw32/lib/libpython39.dll.a -lpython39 #-DDEBUG
+PYFLAGS= -I/usr/x86_64-w64-mingw32/include/python39 -L/usr/x86_64-w64-mingw32/lib/libpython39.dll.a -lpython39
 
 TOPYLOGIC_I=pysrc/topylogic.i
 TOPYLOGIC_WRAP=pysrc/topylogic_wrap.c
-TOPYLOGIC_SO=pysrc/_topylogic.so
+TOPYLOGIC_PYD=pysrc/_topylogic.PYD
 TOPYLOGIC_PY=pysrc/topylogic.py
-TOPYLOGIC_O=pysrc/topylogic_wrap.o
+TOPYLOGIC_SO=pysrc/topylogic_wrap.o
 
 $(BIN): $(OBJ) $(INCLUDES) 
 	swig  -python -keyword $(TOPYLOGIC_I)
-	$(CC) -c -fPIC $(TOPYLOGIC_WRAP) -o $(TOPYLOGIC_O) $(PYFLAGS) 
-	$(CC) -shared $(TOPYLOGIC_O) $(OBJ) -o $(TOPYLOGIC_SO)
+	$(CC) $(PYFLAGS) -c -fPIC $(TOPYLOGIC_WRAP) -o $(TOPYLOGIC_SO)
+	$(CC) -shared $(TOPYLOGIC_SO) $(OBJ) -o $(TOPYLOGIC_PYD) $(PYFLAGS) 
 
 all:$(BIN)
 .PHONY : clean python
@@ -32,7 +32,7 @@ clean:
 	-rm -f $(OBJ)
 	-rm -f $(TOPYLOGIC_PY) 
 	-rm -f $(TOPYLOGIC_SO) 
-	-rm -f $(TOPYLOGIC_O) 
+	-rm -f $(TOPYLOGIC_PYD) 
 	-rm -f $(TOPYLOGIC_WRAP)
 	-rm -f pysrc/state_*
 	-rm -f pysrc/*.pyc
