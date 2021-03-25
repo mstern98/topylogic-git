@@ -6,6 +6,15 @@ The library provides a way for the client to define what information is saved lo
 This library can be used to create AI, ML, and simulations (such as of stock options, electron-electron interaction, etc.).
 
 ## Installation
+
+### Pip
+
+pip install topylogic
+
+### AUR
+
+yay -S python-topylogic
+
 ### Manualy
 Build Python Library
 >make
