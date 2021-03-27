@@ -2,6 +2,9 @@
 // Copyright © 2020 Matthew Stern, Benjamin Michalowicz
 
 %module topylogic
+
+%feature("autodoc", "2");
+
 %{
 #include "../include/topylogic.h"
 #include "../include/topologic.h"
@@ -615,8 +618,6 @@ void generic_f(void *glbl) {
     int process_requests() {
         return process_requests($self);
     }
-
-
 };
 
 %extend vertex_request {
@@ -646,33 +647,6 @@ void generic_f(void *glbl) {
         free($self);
     }
     
-};
-
-%extend mod_vertex_request {
-    mod_vertex_request(struct vertex *vertex, PyObject *f=NULL, PyObject *glbl=NULL) {
-        if (f && !PyCallable_Check(f)) return NULL;
-        if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
-            glbl = Py_BuildValue("O", glbl);
-        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
-        g->glbl = glbl;
-        g->py_callback = f;
-        struct mod_vertex_request *v = (struct mod_vertex_request *) malloc(sizeof(struct mod_vertex_request));
-        v->vertex = vertex;
-        v->f = vertex_f;
-        v->glbl = g;
-        return v;   
-    }
-    ~mod_vertex_request() {}
-    void destroy() {
-        if (!$self) return;
-        $self->vertex = NULL;
-        $self->f = NULL;
-        ((struct glbl_args *) $self->glbl)->glbl = NULL;
-        ((struct glbl_args *) $self->glbl)->py_callback = NULL;
-        free($self->glbl);
-        $self->glbl = NULL;
-        free($self);
-    }
 };
 
 %extend mod_edge_vars_request {
