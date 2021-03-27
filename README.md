@@ -5,6 +5,10 @@ The library provides a way for the client to define what information is saved lo
 
 This library can be used to create AI, ML, and simulations (such as of stock options, electron-electron interaction, etc.).
 
+## Documentation
+
+https://github.com/mstern98/topylogic-git/wiki
+
 ## Installation
 
 ### Pip
