@@ -53,7 +53,9 @@ man/*
 html/*
 TopologicDoc.conf
 pysrc/_topylogic.so
+pysrc/_topylogic.pyd
 pysrc/topylogic.py
 pysrc/topylogic_wrap.*
+pysrc/__pycache__/*
 
 

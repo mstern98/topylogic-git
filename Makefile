@@ -9,8 +9,8 @@ INCLUDES= $(wildcard include/*.h)
 OBJ=$(SRC:.c=.o)
 
 LDFLAGS= -lm -lpthread -L. -ltopologic -pthread 
-CFLAGS=  -Wall -Werror -g -fPIC -O2 `pkg-config --cflags python3` #-DDEBUG
-PYFLAGS= `pkg-config --cflags python3`
+CFLAGS=  -Wall -Werror -g -fPIC -O2  -I/usr/include/python3.6m #`pkg-config --cflags python3` #-DDEBUG
+PYFLAGS= -I/usr/include/python3.6m  #`pkg-config --cflags python3`
 
 TOPYLOGIC_I=pysrc/topylogic.i
 TOPYLOGIC_WRAP=pysrc/topylogic_wrap.c
