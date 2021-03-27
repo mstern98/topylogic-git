@@ -645,8 +645,32 @@ void generic_f(void *glbl) {
         free($self->glbl);
         $self->glbl = NULL;
         free($self);
+    }  
+};
+
+%extend mod_vertex_request {
+    mod_vertex_request(struct vertex *vertex, PyObject *f=NULL, PyObject *glbl=NULL) { 
+        if (f && !PyCallable_Check(f)) return NULL;
+        if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
+            glbl = Py_BuildValue("O", glbl);
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        g->glbl = glbl;
+        g->py_callback = f;
+        struct mod_vertex_request *v = malloc(sizeof(struct mod_vertex_request));
+        v->vertex = vertex;
+        v->f = vertex_f;
+        v->glbl = g;
+        return v;   
     }
-    
+    ~mod_vertex_request() {}
+    void destroy() {
+    	$self->vertex = NULL;
+    	$self->f = NULL;
+    	((struct glbl_args *)$self->glbl)->glbl = NULL;
+        ((struct glbl_args *)$self->glbl)->py_callback = NULL;
+        free($self->glbl);
+    	free($self);
+    }
 };
 
 %extend mod_edge_vars_request {
