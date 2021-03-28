@@ -14,14 +14,14 @@ PYFLAGS= `pkg-config --cflags python3`
 
 TOPYLOGIC_I=pysrc/topylogic.i
 TOPYLOGIC_WRAP=pysrc/topylogic_wrap.c
-TOPYLOGIC_SO=pysrc/_topylogic.so
+TOPYLOGIC_A=pysrc/_topylogic.a
 TOPYLOGIC_PY=pysrc/topylogic.py
 TOPYLOGIC_O=pysrc/topylogic_wrap.o
 
 $(BIN): $(OBJ) $(INCLUDES) 
 	swig  -python -keyword $(TOPYLOGIC_I) 
 	$(CC) -c -fPIC $(TOPYLOGIC_WRAP) -o $(TOPYLOGIC_O) $(PYFLAGS) 
-	$(CC) -shared $(TOPYLOGIC_O) $(OBJ) -o $(TOPYLOGIC_SO)
+	$(AR) rcs $(TOPYLOGIC_A) $(OBJ) $(TOPYLOGIC_O)
 
 all:$(BIN)
 .PHONY : clean python
@@ -31,7 +31,7 @@ clean:
 	rm -rf pysrc/build
 	-rm -f $(OBJ)
 	-rm -f $(TOPYLOGIC_PY) 
-	-rm -f $(TOPYLOGIC_SO) 
+	-rm -f $(TOPYLOGIC_A) 
 	-rm -f $(TOPYLOGIC_O) 
 	-rm -f $(TOPYLOGIC_WRAP)
 	-rm -f pysrc/state_*

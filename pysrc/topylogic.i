@@ -550,7 +550,111 @@ void generic_f(void *glbl) {
         destroy_graph($self);
     }
 
-    int set_starting_ids(PyObject *id) {
+    struct vertex *set_vertex(int id, PyObject *f, PyObject *glbl = NULL) {
+        if (!PyCallable_Check(f)) return NULL;
+        if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
+            glbl = Py_BuildValue("O", glbl);
+
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        g->glbl = (void*)glbl;
+        g->py_callback = f;
+        struct vertex *v = create_vertex($self, vertex_f, id, g);
+
+        if(!v) return NULL;
+        v->graph = $self;
+        
+        struct edge_vars *vars = (struct edge_vars *) malloc(sizeof(struct edge_vars));
+        vars->vars = Py_None;
+        modify_shared_edge_vars(v, vars);
+
+        return v;
+    }
+
+    int remove_vertex(int id) {
+        struct vertex *v = find($self->vertices, id);
+        if (!v) return 0;
+        v->graph = NULL;
+        ((struct glbl_args *) v->glbl)->glbl = NULL;
+        Py_XDECREF(((struct glbl_args *) v->glbl)->py_callback);
+        ((struct glbl_args *) v->glbl)->py_callback = NULL;
+        remove_vertex($self, v);
+        return 1;
+    }
+
+    struct edge *set_edge(int vertex_a_id, int vertex_b_id, PyObject *f, PyObject *glbl = NULL) {
+        struct vertex *vertex_a = find($self->vertices, vertex_a_id);
+        struct vertex *vertex_b = find($self->vertices, vertex_b_id);
+        if (!vertex_a || !vertex_b) return NULL;
+
+        if (!PyCallable_Check(f)) return NULL;
+        if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
+            glbl = Py_BuildValue("O", glbl);
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        g->glbl = glbl;
+        g->py_callback = f;
+        return create_edge(vertex_a, vertex_b, edge_f, g);
+    }
+
+    int remove_edge(int vertex_a_id, int vertex_b_id) {
+        struct vertex *v_a = find($self->vertices, vertex_a_id);
+        struct vertex *v_b = find($self->vertices, vertex_b_id);
+        if (!v_a || !v_b) return 0;
+        remove_edge(v_a, v_b);
+        return 1;
+    }
+
+    PyObject *set_bi_edge(int vertex_a_id, int vertex_b_id, PyObject *f, PyObject *glbl = NULL) {
+        struct vertex *vertex_a = find($self->vertices, vertex_a_id);
+        struct vertex *vertex_b = find($self->vertices, vertex_b_id);
+        if (!vertex_a || !vertex_b) return NULL;
+
+        if (!PyCallable_Check(f)) return NULL;
+        if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
+            glbl = Py_BuildValue("O", glbl);
+        
+        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
+        g->glbl = glbl;
+        g->py_callback = f;
+
+        PyObject *bi = PyList_New(2);
+
+        struct edge *edge_a_to_b = (struct edge *) malloc(sizeof(struct edge));
+        if (!edge_a_to_b) {
+            free(bi);
+            bi = NULL;
+            return NULL;
+        }
+        struct edge *edge_b_to_a = (struct edge *) malloc(sizeof(struct edge));
+        if (!edge_b_to_a) {
+            free(bi);
+            bi = NULL;
+            free(edge_a_to_b);
+            edge_a_to_b = NULL;
+            return NULL;
+        }
+        if(!create_bi_edge(vertex_a, vertex_b, edge_f, g, &edge_b_to_a, &edge_a_to_b)) {
+            free(bi);
+            bi = NULL;
+            free(edge_a_to_b);
+            free(edge_b_to_a);
+            edge_a_to_b = NULL;
+            edge_b_to_a = NULL;
+            return NULL;
+        }
+
+        PyList_SetItem(bi, 0, SWIG_NewPointerObj(SWIG_as_voidptr(edge_a_to_b), SWIGTYPE_p_edge, 1));
+        PyList_SetItem(bi, 1, SWIG_NewPointerObj(SWIG_as_voidptr(edge_b_to_a), SWIGTYPE_p_edge, 1));
+        return bi;
+    }
+
+    int remove_edge(int vertex_a_id, int vertex_b_id) {
+        struct vertex *v_a = find($self->vertices, vertex_a_id);
+        struct vertex *v_b = find($self->vertices, vertex_b_id);
+        if (!v_a || !v_b) return 0;
+        return remove_bi_edge(v_a, v_b);
+    }
+
+    int set_starting_vertices(PyObject *id) {
         if (!PyList_Check(id)) return -1;
         int num_vertices = PyList_Size(id), i = 0;
         int ids[num_vertices];
@@ -562,6 +666,9 @@ void generic_f(void *glbl) {
         return start_set($self, ids, num_vertices);
     }
 
+    int set_starting_vertex(int id) {
+        return start_set($self, &id, 1); 
+    }
 
     %typemap(in) struct vertex_result **{
         $1 = NULL;
@@ -591,6 +698,10 @@ void generic_f(void *glbl) {
 
     int run(struct vertex_result **init_vertex_args) {
         return run($self, init_vertex_args);
+    }
+
+    int run_one(struct vertex_result *init_vertex_args) {
+        return run($self, &init_vertex_args);
     }
 
     int pause_graph() {

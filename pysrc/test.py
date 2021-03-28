@@ -28,13 +28,13 @@ s.destroy()
 def v_alt(i, a, b, c, d, e):
     m = mod_vertex_request(a.vertices.find(1, dtype=topylogic.VERTEX_TYPE), v_fun, [2,3])
     g.submit_request(topylogic.MOD_VERTEX, m)
-    print("v_alt ", b, " ", c, " g_ ", a.state_count, " ", a.max_state_changes, " ", a.max_loop)
+    print("v_alt ", i, b, " ", c, " g_ ", a.state_count, " ", a.max_state_changes, " ", a.max_loop)
     return b, c, d, e
 
 def v_fun(i, a, b1, b2, c, d):
     m = mod_vertex_request(a.vertices.find(1, dtype=topylogic.VERTEX_TYPE), v_alt, [2,3])
     g.submit_request(topylogic.MOD_VERTEX, m)
-    print("v_fund ", a, b1, b2, c, d)
+    print("v_fund ", i, a, b1, b2, c, d)
     b2[0] += 1
     c[0] += 2
     return b1, b2, c, d
@@ -54,13 +54,14 @@ e4 = edge(v1, v3, e_fun, (10, 10))
 vr1 = vertex_result("A", [0])
 vr2 = vertex_result("B", [0])
 vr3 = vertex_result("C", [10])
-g.set_starting_ids([0, 1, 2])
+g.set_starting_vertices([0])
+g.run([vr1])
 
-print("hmm")
-#print(g.vertices.stackify().get(0, dtype=topylogic.VERTEX_TYPE))
+#print("hmm")
+#print(g.vertices.find(0, dtype=topylogic.VERTEX_TYPE))
 
-g.run([vr1, vr2, vr3])
+#g.run([vr1, vr2, vr3])
 g.destroy()
 
-print(g.vertices)
+#print(g.vertices)
 

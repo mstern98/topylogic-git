@@ -14,7 +14,7 @@ PYFLAGS= -I/usr/x86_64-w64-mingw32/include/python39 -L/usr/x86_64-w64-mingw32/li
 
 TOPYLOGIC_I=pysrc/topylogic.i
 TOPYLOGIC_WRAP=pysrc/topylogic_wrap.c
-TOPYLOGIC_PYD=pysrc/_topylogic.PYD
+TOPYLOGIC_PYD=pysrc/_topylogic.pyd
 TOPYLOGIC_PY=pysrc/topylogic.py
 TOPYLOGIC_SO=pysrc/topylogic_wrap.o
 
