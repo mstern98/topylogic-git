@@ -677,7 +677,19 @@ void generic_f(void *glbl) {
         return bi;
     }
 
-    int remove_edge(int vertex_a_id, int vertex_b_id) {
+    struct bi_edge *bi_edge(int vertex_a_id, int vertex_b_id) {
+        struct vertex *v = find($self->vertices, vertex_a_id);
+        if (!v) return NULL;
+        struct edge *e = find(v->edge_tree, vertex_b_id);
+        if (!e || !e->bi_edge) return NULL;
+        struct bi_edge *bi = (struct bi_edge *) malloc(sizeof(struct bi_edge));
+        if(!bi) return NULL;
+        bi->edge_a_to_b = e;
+        bi->edge_b_to_a = e->bi_edge;
+        return bi;
+    }
+
+    int remove_bi_edge(int vertex_a_id, int vertex_b_id) {
         struct vertex *v_a = find($self->vertices, vertex_a_id);
         struct vertex *v_b = find($self->vertices, vertex_b_id);
         if (!v_a || !v_b) return 0;
