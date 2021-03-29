@@ -56,6 +56,7 @@ vr1 = vertex_result("A", [0])
 vr2 = vertex_result("B", [0])
 vr3 = vertex_result("C", [10])
 
+print(g.get_vertices())
 '''
 g.set_starting_vertices([0])
 g.run([vr1])

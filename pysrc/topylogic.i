@@ -153,6 +153,15 @@ void generic_f(void *glbl) {
         }
         return list;
     }
+
+    char *__str__() {
+        return "<stack>";
+    }
+
+    char *__repr__() {
+        return "<stack>";
+    }
+
 };
 
 %include "../include/AVL.h"
@@ -270,6 +279,14 @@ void generic_f(void *glbl) {
         stackify($self, stack);
         return SWIG_NewPointerObj(SWIG_as_voidptr(stack), SWIGTYPE_p_stack, 1);
     }
+
+    char *__str__() {
+        return "<AVL>";
+    }
+
+    char *__repr__() {
+        return "<AVL>";
+    }
 };
 
 %include "../include/graph.h"
@@ -315,6 +332,19 @@ void generic_f(void *glbl) {
         else
             return NULL;
     }
+
+    char *__str__() {
+        char *str = (char *) malloc(sizeof(char) * 50);
+        sprintf(str, "<Edge Connecting vertex %d to %d>", $self->a->id, $self->b->id);
+        return str;
+    }
+
+    char *__repr__() {
+        char *str = (char *) malloc(sizeof(char) * 50);
+        sprintf(str, "<Edge Connecting vertex %d to %d>", $self->a->id, $self->b->id);
+        return str;
+    }
+
 };
 
 %include "../include/topylogic.h"
@@ -400,6 +430,19 @@ void generic_f(void *glbl) {
         else
             return NULL;
     }
+    
+    char *__str__() {
+        char *str = (char *) malloc(sizeof(char) * 50);
+        sprintf(str, "<Bi Edge Connecting vertex %d to %d>", $self->edge_a_to_b->a->id, $self->edge_b_to_a->b->id);
+        return str;
+    }
+    char *__repr__() {
+        char *str = (char *) malloc(sizeof(char) * 50);
+        sprintf(str, "<Bi Edge Connecting vertex %d to %d>", $self->edge_a_to_b->a->id, $self->edge_b_to_a->b->id);
+        return str;
+    }
+
+
 };
 
 %extend vertex {
@@ -452,13 +495,29 @@ void generic_f(void *glbl) {
         else 
             return NULL;
     }
-    int set_shared_edge_vars(PyObject *edge_vars) {
+    struct vertex *set_shared_edge_vars(PyObject *edge_vars) {
         if (PyList_Check(edge_vars) || PyMapping_Check(edge_vars)) 
             edge_vars = Py_BuildValue("O", edge_vars);
         struct edge_vars *vars = (struct edge_vars *) malloc(sizeof(struct edge_vars));
         vars->vars = edge_vars;
-        return modify_shared_edge_vars($self, vars);
+        if (modify_shared_edge_vars($self, vars))
+            return $self;
+        else 
+            return NULL;
     }
+
+    char *__str__() {
+        char *str = (char *) malloc(sizeof(char) * 30);
+        sprintf(str, "<Vertex ID: %d>", $self->id);
+        return str;
+    }
+
+    char *__repr__() {
+        char *str = (char *) malloc(sizeof(char) * 30);
+        sprintf(str, "<Vertex ID: %d>", $self->id);
+        return str;
+    }
+
 }
 
 %extend vertex_result {
@@ -512,6 +571,14 @@ void generic_f(void *glbl) {
     PyObject *get_edge_argv() {
         return $self->edge_argv;
     }
+
+    char *__str__() {
+        return "<Vertex Result>";
+    }
+
+    char *__repr() {
+        return "<Vertex Result>";
+    }
 }
 
 %extend graph {
@@ -556,10 +623,26 @@ void generic_f(void *glbl) {
         return v;
     }
 
+    PyObject *get_vertices() {
+        PyObject *list = NULL;
+        int i = 0;
+        struct stack *vertices = init_stack();
+        struct vertex *v = NULL;
+        inorder($self->vertices, vertices);
+        list = PyList_New(vertices->length);
+        while ((v = (struct vertex *) pop(vertices)) != NULL) {
+            PyList_SetItem(list, i, SWIG_NewPointerObj(SWIG_as_voidptr(v), SWIGTYPE_p_vertex, 1));
+            ++i;
+        }
+        destroy_stack(vertices);
+        vertices = NULL;
+        return list;
+    }
+
     PyObject *vertices_connected_to(int id) {
         PyObject *list = NULL;
         struct vertex *vertex = find($self->vertices, id);
-        if (!vertex) return PyList_New(1);
+        if (!vertex) return PyList_New(0);
         int i = 0;
         struct stack *vertices = init_stack();
         struct vertex *v = NULL;
@@ -621,6 +704,26 @@ void generic_f(void *glbl) {
         if (!v) return NULL;
         struct edge *e = find(v->edge_tree, vertex_b_id);
         return e;
+    }
+    
+    PyObject *get_edges() {
+        PyObject *list = NULL;
+        struct stack *vertices = init_stack();
+        struct stack *edges = init_stack();
+        struct edge *e = NULL;
+        struct vertex *v = NULL;
+        inorder($self->vertices, vertices);
+        list = PyList_New(0);
+        while ((v = (struct vertex *) pop(vertices)) != NULL) {
+            inorder(v->edge_tree, edges);
+            while ((e = (struct edge *) pop(edges)) != NULL)
+                PyList_Append(list, SWIG_NewPointerObj(SWIG_as_voidptr(v), SWIGTYPE_p_edge, 1));
+        }
+        destroy_stack(edges);
+        edges = NULL;
+        destroy_stack(vertices);
+        vertices = NULL;
+        return list;
     }
 
     int remove_edge(int vertex_a_id, int vertex_b_id) {
@@ -770,6 +873,14 @@ void generic_f(void *glbl) {
     
     int process_requests() {
         return process_requests($self);
+    }
+
+    char *__str__() {
+        return "<Graph>";
+    }
+    
+    char *__repr__() {
+        return "<Graph>";
     }
 };
 
