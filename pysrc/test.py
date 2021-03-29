@@ -43,9 +43,10 @@ def e_fun(i, a, b, c, d):
     return True, (1,2)
 
 g = graph(max_state_changes=8, max_loop=5, context=topylogic.SWITCH)
-v1 = vertex(g, v_fun, 0, [1, {1:2, "s":[1, 2]}])
-v2 = vertex(g, v_fun, 1, [2, {1:2, "s":[1, 2]}])
-v3 = vertex(g, v_alt, 2, [1, 2])
+v1 = vertex(g, 0, v_fun, [1, {1:2, "s":[1, 2]}])
+v2 = vertex(g, 1, v_fun, [2, {1:2, "s":[1, 2]}])
+v3 = vertex(g, 2, v_alt, [1, 2])
+
 
 e1 = edge(v1, v2, e_fun, (0, 0))
 e2 = edge(v2, v1, e_fun, (0, 2))
@@ -54,6 +55,8 @@ e4 = edge(v1, v3, e_fun, (10, 10))
 vr1 = vertex_result("A", [0])
 vr2 = vertex_result("B", [0])
 vr3 = vertex_result("C", [10])
+
+'''
 g.set_starting_vertices([0])
 g.run([vr1])
 
@@ -64,4 +67,4 @@ g.run([vr1])
 g.destroy()
 
 #print(g.vertices)
-
+'''

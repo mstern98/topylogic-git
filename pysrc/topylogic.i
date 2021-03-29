@@ -278,8 +278,8 @@ void generic_f(void *glbl) {
 %include "../include/context.h"
 %include "../include/request.h"
 %extend edge {
-    edge(struct vertex *a, struct vertex *b, PyObject *f, PyObject *glbl = NULL) {
-        if (!PyCallable_Check(f)) return NULL;
+    edge(struct vertex *a, struct vertex *b, PyObject *f = NULL, PyObject *glbl = NULL) {
+        if (f && !PyCallable_Check(f)) return NULL;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
             glbl = Py_BuildValue("O", glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
@@ -291,46 +291,36 @@ void generic_f(void *glbl) {
     void destroy() {
         remove_edge($self->a, $self->b);
     }
-
-    int modify_edge(PyObject *f = NULL, PyObject *glbl = NULL) {
-        if (f && !PyCallable_Check(f)) return -1;
-        if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
-            glbl = Py_BuildValue("O", glbl);
-        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
-        if (f) { 
-            g->py_callback = f;
-            Py_XDECREF(((struct glbl_args *) $self->glbl)->py_callback);
-        }
-        else g->py_callback = ((struct glbl_args *) $self->glbl)->py_callback;
-        if (glbl) g->glbl = glbl;
-        else g->glbl = ((struct glbl_args *) $self->glbl)->glbl;
-
-        return modify_edge($self->a, $self->b, edge_f, g);
-    }
-    int set_f(PyObject *f) {
-        if(!PyCallable_Check(f)) return -1;
+    struct edge  *set_f(PyObject *f) {
+        if(!PyCallable_Check(f)) return NULL;
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->py_callback = f;
         Py_XDECREF(((struct glbl_args *) $self->glbl)->py_callback);
         g->glbl = ((struct glbl_args *) $self->glbl)->glbl;
 
-        return modify_edge($self->a, $self->b, edge_f, g);
+        if (modify_edge($self->a, $self->b, edge_f, g))
+            return $self;
+        else
+            return NULL;
     }
-    int set_glbl(PyObject *glbl = NULL) {
+    struct edge *set_glbl(PyObject *glbl = NULL) {
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl))) 
             glbl = Py_BuildValue("O", glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = ((struct glbl_args *) $self->glbl)->py_callback;
 
-        return modify_edge($self->a, $self->b, edge_f, g);
+        if (modify_edge($self->a, $self->b, edge_f, g))
+            return $self;
+        else
+            return NULL;
     }
 };
 
 %include "../include/topylogic.h"
 %extend bi_edge {
-    bi_edge(struct vertex *a, struct vertex *b, PyObject *f, PyObject *glbl = NULL) {
-        if (!PyCallable_Check(f)) return NULL;
+    bi_edge(struct vertex *a, struct vertex *b, PyObject *f = NULL, PyObject *glbl = NULL) {
+        if (f && !PyCallable_Check(f)) return NULL;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
             glbl = Py_BuildValue("O", glbl);
         
@@ -369,7 +359,11 @@ void generic_f(void *glbl) {
         bi->edge_b_to_a = edge_b_to_a;
         return bi;
     }
-    ~bi_edge() {}
+    ~bi_edge() {
+        $self->edge_a_to_b = NULL;
+        $self->edge_b_to_a = NULL;
+        free($self);
+    }
     void destroy() {
         ((struct glbl_args *) $self->edge_a_to_b->glbl)->glbl = NULL;
         Py_XDECREF(((struct glbl_args *) $self->edge_a_to_b->glbl)->py_callback);
@@ -380,48 +374,37 @@ void generic_f(void *glbl) {
         remove_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b);
         $self->edge_a_to_b = NULL;
         $self->edge_b_to_a = NULL;
-        free($self);
     }
 
-    int modify_bi_edge(PyObject *f = NULL, PyObject *glbl = NULL) {
-        if (f != NULL && !PyCallable_Check(f)) return -1;
-        if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
-            glbl = Py_BuildValue("O", glbl);
-        
-        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
-        if (f) {
-            g->py_callback = f;
-            Py_XDECREF(((struct glbl_args *) $self->edge_a_to_b->glbl)->py_callback);
-        }
-        else g->py_callback = ((struct glbl_args *) $self->edge_a_to_b->glbl)->py_callback;
-        if (glbl) g->glbl = glbl;
-        else g->glbl = ((struct glbl_args *) $self->edge_a_to_b->glbl)->glbl;
-
-        return modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b, edge_f, g);
-    }
-    int set_f(PyObject *f) {
-        if (!PyCallable_Check(f)) return -1;
+    struct bi_edge *set_callback(PyObject *f) {
+        if (!PyCallable_Check(f)) return NULL;
 
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = ((struct glbl_args *) $self->edge_a_to_b->glbl)->glbl;
         g->py_callback = f;
         Py_XDECREF(((struct glbl_args *) $self->edge_a_to_b->glbl)->py_callback);
-        return modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b, edge_f, g);
+        if (modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b, edge_f, g))
+            return $self;
+        else
+            return NULL;
     }
-    int set_glbl(PyObject *glbl = NULL) {
+    struct bi_edge *set_glbl(PyObject *glbl = NULL) {
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl))) 
             glbl = Py_BuildValue("O", glbl);
 
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = ((struct glbl_args *) $self->edge_a_to_b->glbl)->py_callback;
-        return modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b, edge_f, g);;
+        if (modify_bi_edge($self->edge_a_to_b->a, $self->edge_a_to_b->b, edge_f, g))
+            return $self;
+        else
+            return NULL;
     }
 };
 
 %extend vertex {
-    vertex(struct graph *graph, PyObject *f, int id, PyObject *glbl = NULL) {
-        if (!PyCallable_Check(f)) return NULL;
+    vertex(struct graph *graph, int id, PyObject *f = NULL, PyObject *glbl = NULL) {
+        if (f && !PyCallable_Check(f)) return NULL;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
             glbl = Py_BuildValue("O", glbl);
 
@@ -448,31 +431,28 @@ void generic_f(void *glbl) {
         ((struct glbl_args *) $self->glbl)->py_callback = NULL;
         remove_vertex(g, $self);
     }
-    int modify_vertex(PyObject *f, PyObject *glbl) {
-        if (!PyCallable_Check(f)) return -1;
-        if (PyList_Check(glbl) || PyMapping_Check(glbl))
-            glbl = Py_BuildValue("O", glbl);
-        struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
-        g->glbl = glbl;
-        g->py_callback = f;
-        return modify_vertex($self, vertex_f, g);
-    }
-    int modify_f(PyObject *f) {
-        if (!PyCallable_Check(f)) return -1;
+    struct vertex *set_callback(PyObject *f) {
+        if (!PyCallable_Check(f)) return NULL;
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = ((struct glbl_args *) $self->glbl)->glbl;
         g->py_callback = f;
-        return modify_vertex($self, vertex_f, g);
+        if (modify_vertex($self, vertex_f, g))
+            return $self;
+        else 
+            return NULL;
     }
-    int modify_glbl(PyObject *glbl) {
+    struct vertex *set_glbl(PyObject *glbl) {
         if (PyList_Check(glbl) || PyMapping_Check(glbl)) 
             glbl = Py_BuildValue("O", glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = ((struct glbl_args *) $self->glbl)->py_callback;
-        return modify_vertex($self, vertex_f, g);
+        if (modify_vertex($self, vertex_f, g))
+            return $self;
+        else 
+            return NULL;
     }
-    int modify_shared_edge_vars(PyObject *edge_vars) {
+    int set_shared_edge_vars(PyObject *edge_vars) {
         if (PyList_Check(edge_vars) || PyMapping_Check(edge_vars)) 
             edge_vars = Py_BuildValue("O", edge_vars);
         struct edge_vars *vars = (struct edge_vars *) malloc(sizeof(struct edge_vars));
@@ -550,8 +530,8 @@ void generic_f(void *glbl) {
         destroy_graph($self);
     }
 
-    struct vertex *set_vertex(int id, PyObject *f, PyObject *glbl = NULL) {
-        if (!PyCallable_Check(f)) return NULL;
+    struct vertex *set_vertex(int id, PyObject *f = NULL, PyObject *glbl = NULL) {
+        if (f && !PyCallable_Check(f)) return NULL;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
             glbl = Py_BuildValue("O", glbl);
 
@@ -570,6 +550,48 @@ void generic_f(void *glbl) {
         return v;
     }
 
+    struct vertex *vertex(int id) {
+        struct vertex *v = find($self->vertices, id);
+        if (!v) return NULL;
+        return v;
+    }
+
+    PyObject *vertices_connected_to(int id) {
+        PyObject *list = NULL;
+        struct vertex *vertex = find($self->vertices, id);
+        if (!vertex) return PyList_New(1);
+        int i = 0;
+        struct stack *vertices = init_stack();
+        struct vertex *v = NULL;
+        inorder(vertex->joining_vertices, vertices);
+        list = PyList_New(vertices->length);
+        while ((v = (struct vertex*) pop(vertices)) != NULL) {
+            PyList_SetItem(list, i, SWIG_NewPointerObj(SWIG_as_voidptr(v), SWIGTYPE_p_vertex, 1));
+            ++i;
+        }
+        destroy_stack(vertices);
+        vertices = NULL;
+        return list;
+    }
+
+    PyObject *edges_connected_to(int id) {
+        PyObject *list = NULL;
+        struct vertex *vertex = find($self->vertices, id);
+        if (!vertex) return PyList_New(1);
+        int i = 0;
+        struct stack *edges = init_stack();
+        struct edge *e = NULL;
+        inorder(vertex->edge_tree, edges);
+        list = PyList_New(edges->length);
+        while ((e = (struct edge*) pop(edges)) != NULL) {
+            PyList_SetItem(list, i, SWIG_NewPointerObj(SWIG_as_voidptr(e), SWIGTYPE_p_edge, 1));
+            ++i;
+        }
+        destroy_stack(edges);
+        edges = NULL;
+        return list;
+    }
+
     int remove_vertex(int id) {
         struct vertex *v = find($self->vertices, id);
         if (!v) return 0;
@@ -581,18 +603,24 @@ void generic_f(void *glbl) {
         return 1;
     }
 
-    struct edge *set_edge(int vertex_a_id, int vertex_b_id, PyObject *f, PyObject *glbl = NULL) {
+    struct edge *set_edge(int vertex_a_id, int vertex_b_id, PyObject *f = NULL, PyObject *glbl = NULL) {
         struct vertex *vertex_a = find($self->vertices, vertex_a_id);
         struct vertex *vertex_b = find($self->vertices, vertex_b_id);
         if (!vertex_a || !vertex_b) return NULL;
-
-        if (!PyCallable_Check(f)) return NULL;
+        if (f && !PyCallable_Check(f)) return NULL;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
             glbl = Py_BuildValue("O", glbl);
         struct glbl_args *g = (struct glbl_args *) malloc(sizeof(struct glbl_args));
         g->glbl = glbl;
         g->py_callback = f;
         return create_edge(vertex_a, vertex_b, edge_f, g);
+    }
+
+    struct edge *edge(int vertex_a_id, int vertex_b_id) {
+        struct vertex *v = find($self->vertices, vertex_a_id);
+        if (!v) return NULL;
+        struct edge *e = find(v->edge_tree, vertex_b_id);
+        return e;
     }
 
     int remove_edge(int vertex_a_id, int vertex_b_id) {
@@ -603,12 +631,12 @@ void generic_f(void *glbl) {
         return 1;
     }
 
-    PyObject *set_bi_edge(int vertex_a_id, int vertex_b_id, PyObject *f, PyObject *glbl = NULL) {
+    struct bi_edge *set_bi_edge(int vertex_a_id, int vertex_b_id, PyObject *f = NULL, PyObject *glbl = NULL) {
         struct vertex *vertex_a = find($self->vertices, vertex_a_id);
         struct vertex *vertex_b = find($self->vertices, vertex_b_id);
         if (!vertex_a || !vertex_b) return NULL;
 
-        if (!PyCallable_Check(f)) return NULL;
+        if (f && !PyCallable_Check(f)) return NULL;
         if (glbl && (PyList_Check(glbl) || PyMapping_Check(glbl)))
             glbl = Py_BuildValue("O", glbl);
         
@@ -616,7 +644,9 @@ void generic_f(void *glbl) {
         g->glbl = glbl;
         g->py_callback = f;
 
-        PyObject *bi = PyList_New(2);
+        struct bi_edge *bi = (struct bi_edge *) malloc(sizeof(struct bi_edge));
+        if (!bi)
+            return NULL;
 
         struct edge *edge_a_to_b = (struct edge *) malloc(sizeof(struct edge));
         if (!edge_a_to_b) {
@@ -642,8 +672,8 @@ void generic_f(void *glbl) {
             return NULL;
         }
 
-        PyList_SetItem(bi, 0, SWIG_NewPointerObj(SWIG_as_voidptr(edge_a_to_b), SWIGTYPE_p_edge, 1));
-        PyList_SetItem(bi, 1, SWIG_NewPointerObj(SWIG_as_voidptr(edge_b_to_a), SWIGTYPE_p_edge, 1));
+        bi->edge_a_to_b = edge_a_to_b;
+        bi->edge_b_to_a = edge_b_to_a;
         return bi;
     }
 
